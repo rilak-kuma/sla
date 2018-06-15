@@ -1,0 +1,95 @@
+<table width="100%" align="center" border="0" cellpadding="0" cellspacing="0" style="max-width:650px;margin:0 auto; border:7px solid #1c1f5a; ;border-collapse:collapse">
+	<tbody>
+		<tr>
+			<td align="center">
+				<!-- header -->
+				<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;background:#ffffff;">
+					<tbody>
+						<tr>
+							<td style="padding:0 20px;">
+								<table width="100%" style="border-bottom:1px solid #e9e9e9;" >
+									<tbody>
+										<tr>
+											<td>
+												<a href="http://${serverHttpHost}" style="display:inline-block;text-decortaion:none" target="_blank"><img src="http://${serverHttpHost}/img/mail/logo_mail.png" width="155" style="display:block; border:0;" alt="서울혁신파크"></a>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<!-- /header -->
+
+				<!-- contents -->
+				<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
+					<tbody>
+						<tr>
+							<td  colspan="3" align="center" style="padding:60px 10px; font-family:'나눔고딕',NanumGothic,'맑은고딕',Malgun Gothic,'돋움',Dotum,Helvetica,'Apple SD Gothic Neo',Sans-serif;font-size:33px;color:#1c1f5a; letter-spacing:-1px; line-height:1.2em;">시설예약이 승인되었습니다.</td>
+						</tr>
+						<tr>
+							<td colspan="2" style="padding:10px 0 10px 20px; font-family:'나눔고딕',NanumGothic,'맑은고딕',Malgun Gothic,'돋움',Dotum,Helvetica,'Apple SD Gothic Neo',Sans-serif; font-weight:bold; font-size:14px;">
+							예약내역</td>
+							<td align="right" style="padding:10px 20px 10px 0; font-family:'나눔고딕',NanumGothic,'맑은고딕',Malgun Gothic,'돋움',Dotum,Helvetica,'Apple SD Gothic Neo',Sans-serif; font-size:12px;">$dateTool.format('yyyy.MM.dd HH:mm', $now)</td>
+						</tr>
+						<tr>
+							<td  colspan="3" style="padding:0 20px; font-family:'나눔고딕',NanumGothic,'맑은고딕',Malgun Gothic,'돋움',Dotum,Helvetica,'Apple SD Gothic Neo',Sans-serif;">
+								<table width="100%" cellpadding="0" cellspacing="0">
+									<tbody>
+										<tr>
+											<td style="padding:10px; border-top:1px solid #dfdfdf;  border-bottom:1px solid #dfdfdf;  border-right:1px solid #dfdfdf; background-color:#f1f1f1; font-size:12px;">예약시설명</td>
+											<td style="padding:10px; border-top:1px solid #dfdfdf;  border-bottom:1px solid #dfdfdf; font-size:12px;">${fctNm}</td>
+										</tr>
+										<tr>
+											<td style="padding:10px; border-bottom:1px solid #dfdfdf;  border-right:1px solid #dfdfdf; background-color:#f1f1f1; font-size:12px;">사용일시</td>
+											<td style="padding:10px; border-bottom:1px solid #dfdfdf; font-size:12px;">${dttm}</td>
+										</tr>
+										<tr>
+											<td style="padding:10px; border-bottom:1px solid #dfdfdf;  border-right:1px solid #dfdfdf; background-color:#f1f1f1; font-size:12px;">진행상태</td>
+											<td style="padding:10px; border-bottom:1px solid #dfdfdf; font-size:12px;">
+												결제요청. (결제완료 후 해당 시설예약이 최종 완료됩니다.)
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</td>
+						</tr>
+						<tr>
+							<td colspan="3" style="padding:10px 10px 10px 20px; font-family:'나눔고딕',NanumGothic,'맑은고딕',Malgun Gothic,'돋움',Dotum,Helvetica,'Apple SD Gothic Neo',Sans-serif; font-size:12px;">
+								<span style="font-weight:bold;">안내</span>
+								<span style="color:#cdcdcd; padding:0 5px;">l</span>
+								<span>방문 예약진행상황은 마이페이지>예약/신청내역에서 상세정보를 확인할 수 있습니다</span>
+							</td>
+						</tr>
+						<tr>
+							<td colspan="3" height="60"></td>
+						</tr>
+					</tbody>
+				</table>
+				<!-- /contents -->
+
+				<!-- footer -->
+				<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
+					<tbody>
+						<tr>
+							<td colspan="2" align="center" style="background:#f1f1f1; padding:15px 10px; font-family:'나눔고딕',NanumGothic,'맑은고딕',Malgun Gothic,'돋움',Dotum,Helvetica,'Apple SD Gothic Neo',Sans-serif;font-size:12px;color:#222222;line-height:18px">이 메일은 발신전용으로 회신되지 않습니다. 궁금하신 사항은 서울혁신파크 사이트에 <a href="http://${serverHttpHost}" target="_blank" style="color:#0f889d;text-decoration:underline">문의</a>해 주시기 바랍니다.</td>
+							</tr>
+							<tr>
+								<td style="padding:20px 0 20px 20px; font-family:'나눔고딕',NanumGothic,'맑은고딕',Malgun Gothic,'돋움',Dotum,Helvetica,'Apple SD Gothic Neo',Sans-serif;font-size:11px;color:#777777;line-height:1.400em;">
+									서울시 은평구 통일로 684(녹번동 5번지) 1동 2층  (구)질병관리본부<br/>
+									<span style="font-size:10px; display:block; padding-top:5px;">© 2016 서울혁신파크. All Rights Reserved.</span>
+								</td>
+								<td align="right" width="80" valign="top" style="padding:20px 20px 20px 0;">
+									<a href="http://www.facebook.com/seoulmaxerve" style="display:inline-block;text-decortaion:none; margin-right:3px;" target="_blank"><img src="http://${serverHttpHost}/img/mail/fb_mail.png" width="20" height="20" style="border:0;" alt="서울혁신파크 페이스북"></a>
+									<a href="http://s_innopark.blog.me" style="display:inline-block;text-decortaion:none;  margin-right:3px;" target="_blank"><img src="http://${serverHttpHost}/img/mail/blog_mail.png" width="20" height="20" style="border:0;" alt="서울혁신파크 블로그"></a>
+									<a href="http://www.instagram.com/s_innopark" style="display:inline-block;text-decortaion:none" target="_blank"><img src="http://${serverHttpHost}/img/mail/insta_mail.png" width="20" height="20" style="border:0;" alt="서울혁신파크 인스타그램"></a>
+								</td>
+							</tr>
+					</tbody>
+				</table>
+				<!-- /footer -->
+			</td>
+		</tr>
+	</tbody>
+</table>

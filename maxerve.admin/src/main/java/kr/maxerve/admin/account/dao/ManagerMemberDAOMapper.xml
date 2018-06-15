@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.maxerve.admin.account.managerMemberDAO">
+<!-- 	내정보 수정 -->
+	<update id="updateMyinfo" parameterType="managerMemberDTO">
+		UPDATE
+			TBL_MNGR_MBR
+		SET
+		<if test="mngrMbrPwd != null and !mngrMbrPwd.equals('')">
+			MNGR_MBR_PWD = #{mngrMbrPwd},
+		</if>
+			EMIL = #{emil},
+			PHN = #{phn},
+			MNGR_MBR_DPT = #{mngrMbrDpt}
+		WHERE
+			MNGR_MBR_IDX = #{mngrMbrIdx}
+	</update>
+
+<!-- 	회원수 -->
+	<select id="selectMemberCount" parameterType="reqManagerMemberVO" resultType="integer">
+		SELECT
+			COUNT(*)
+		FROM
+			TBL_MNGR_MBR
+		WHERE
+			DEL_YN != 'Y'
+	<if test="searchText != null and !searchText.equals('')">
+		<if test="searchType.equalsIgnoreCase('1')">
+			AND MNGR_MBR_NM LIKE '%'#{searchText}'%'
+		</if>
+		<if test="searchType.equalsIgnoreCase('2')">
+			AND MNGR_MBR_ID LIKE '%'#{searchText}'%'
+		</if>
+	</if>
+	</select>
+
+<!-- 	회원목록 -->
+	<select id="selectMemberList" parameterType="reqManagerMemberVO" resultType="managerMemberDTO">
+		SELECT
+			MNGR_MBR_IDX	mngrMbrIdx,
+			MNGR_MBR_ID		mngrMbrId,
+			MNGR_MBR_PWD	mngrMbrPwd,
+			MNGR_MBR_NM		mngrMbrNm,
+			MNGR_MBR_DPT	mngrMbrDpt,
+			EMIL			emil,
+			PHN				phn,
+			USE_YN			useYn,
+			DEL_YN			delYn,
+			CRE_DTTM		creDttm
+		FROM
+			TBL_MNGR_MBR
+		WHERE
+			DEL_YN != 'Y'
+	<if test="searchText != null and !searchText.equals('')">
+		<if test="searchType.equalsIgnoreCase('1')">
+			AND MNGR_MBR_NM LIKE CONCAT('%',#{searchText},'%')
+		</if>
+		<if test="searchType.equalsIgnoreCase('2')">
+			AND MNGR_MBR_ID LIKE CONCAT('%',#{searchText},'%')
+		</if>
+	</if>
+		ORDER BY
+			MNGR_MBR_IDX DESC
+		LIMIT #{pageInfo.firstRecordIndex}, #{pageInfo.recordCountPerPage}
+	</select>
+
+<!-- 	회원정보 -->
+	<select id="selectMemberInfo" parameterType="managerMemberDTO" resultType="managerMemberDTO">
+		SELECT
+			MNGR_MBR_IDX	mngrMbrIdx,
+			MNGR_MBR_ID		mngrMbrId,
+			MNGR_MBR_PWD	mngrMbrPwd,
+			MNGR_MBR_NM		mngrMbrNm,
+			MNGR_MBR_DPT	mngrMbrDpt,
+			EMIL			emil,
+			PHN				phn,
+			USE_YN			useYn,
+			DEL_YN			delYn,
+			CRE_DTTM		creDttm
+		FROM
+			TBL_MNGR_MBR
+		WHERE
+			DEL_YN != 'Y'
+		AND MNGR_MBR_IDX = #{mngrMbrIdx}
+	</select>
+
+<!-- 	메뉴권한 목록 -->
+	<select id="selectMenuAuthList" parameterType="managerMenuDTO" resultType="managerMenuDTO">
+		SELECT
+			MNGR_MBR_IDX,
+			MNU_CD,
+			WRT_YN
+		FROM
+			TBL_MNGR_MBR_MNU
+		WHERE
+			MNGR_MBR_IDX = #{mngrMbrIdx}
+	</select>
+
+<!-- 	메뉴권한 그룹목록 -->
+	<select id="selectMenuAuthGrpList" parameterType="string" resultType="managerMenuDTO">
+		SELECT
+			TB2.DEP2 MNU_CD
+		FROM
+			TBL_MNGR_MBR_MNU TB1,
+			TBL_CMMN_CD TB2
+		WHERE
+			TB1.MNGR_MBR_IDX = #{value}
+		AND TB2.DEL_YN != 'Y'
+		AND TB1.MNU_CD = TB2.CMMN_CD
+		AND TB2.DEP2 != ''
+		GROUP BY
+			TB2.DEP2
+	</select>
+
+<!-- 	메뉴권한 삭제 -->
+	<delete id="deleteMenuAuth" parameterType="managerMenuDTO">
+		DELETE
+		FROM
+			TBL_MNGR_MBR_MNU
+		WHERE
+			MNGR_MBR_IDX = #{mngrMbrIdx}
+	</delete>
+
+<!-- 	메뉴권한 등록 -->
+	<insert id="insertMenuAuth" parameterType="managerMenuDTO">
+		INSERT INTO
+			TBL_MNGR_MBR_MNU
+		(
+			MNGR_MBR_IDX,  	<!-- 관리자 인덱스 -->
+			MNU_CD,			<!-- 관리자메뉴 공통코드(023) -->
+			WRT_YN			<!-- 쓰기 가능여부 -->
+		) VALUES (
+			#{mngrMbrIdx},
+			#{mnuCd},
+			#{wrtYn}
+		)
+	</insert>
+
+<!-- 	아이디 존재여부 -->
+	<select id="selectIsExistId" parameterType="managerMemberDTO" resultType="boolean">
+		SELECT
+			COUNT(*)
+		FROM
+			TBL_MNGR_MBR
+		WHERE
+			MNGR_MBR_ID = #{mngrMbrId}
+	</select>
+
+<!-- 	회원등록 -->
+	<insert id="insertMember" parameterType="managerMemberDTO" useGeneratedKeys="true" keyProperty="mngrMbrIdx">
+		INSERT INTO TBL_MNGR_MBR (
+			MNGR_MBR_ID,  <!-- 관리자계정 아이디 -->
+			MNGR_MBR_PWD, <!-- 관리자계정 비밀번호 -->
+			MNGR_MBR_NM,  <!-- 이름 -->
+			MNGR_MBR_DPT, <!-- 부서 -->
+			EMIL,         <!-- 이메일 -->
+			PHN,          <!-- 연락처 -->
+			USE_YN        <!-- 사용여부 -->
+		) VALUES (
+			#{mngrMbrId},
+			#{mngrMbrPwd},
+			#{mngrMbrNm},
+			#{mngrMbrDpt},
+			#{emil},
+			#{phn},
+			#{useYn}
+		)
+	</insert>
+
+<!-- 	회원정보 수정 -->
+	<update id="updateMember" parameterType="managerMemberDTO">
+		UPDATE
+			TBL_MNGR_MBR
+		SET
+			MNGR_MBR_DPT = #{mngrMbrDpt},
+			EMIL = #{emil},
+			PHN = #{phn},
+			USE_YN = #{useYn}
+		WHERE
+			MNGR_MBR_IDX = #{mngrMbrIdx}
+	</update>
+	
+<!-- 	회원삭제 -->
+	<update id="deleteMember" parameterType="string">
+		UPDATE
+			TBL_MNGR_MBR
+		SET
+			DEL_YN = 'Y'
+		WHERE
+			MNGR_MBR_IDX = #{value}
+	</update>
+</mapper>

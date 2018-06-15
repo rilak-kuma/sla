@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+	PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-config.dtd">
+    <configuration>
+	    <settings>
+			<setting name="cacheEnabled"              value="true"/>
+	        <setting name="lazyLoadingEnabled"        value="false"/>
+	        <setting name="multipleResultSetsEnabled" value="true"/>
+	        <setting name="useColumnLabel"            value="true"/>
+	        <setting name="useGeneratedKeys"          value="false"/>
+	        <setting name="defaultExecutorType"       value="SIMPLE"/>
+	        <setting name="defaultStatementTimeout"   value="25000"/>
+	        <setting name="mapUnderscoreToCamelCase"  value="true" />
+	        <setting name="logImpl" value="LOG4J"/>
+	    </settings>
+
+	    <typeAliases>
+
+			<!-- Req***VO -->
+			<typeAlias type="kr.maxerve.admin.adjust.vo.ReqAdjustVO" alias="reqAdjustVO"/>
+			<typeAlias type="kr.maxerve.admin.adjust.vo.ReqAdjustHistoryVO" alias="reqAdjustHistoryVO"/>
+			<typeAlias type="kr.maxerve.admin.banner.vo.ReqBannerVO" alias="reqBannerVO"/>
+			<typeAlias type="kr.maxerve.admin.activity.vo.ReqEventVO" alias="reqEventVO"/>
+			<typeAlias type="kr.maxerve.admin.reserve.vo.ReqFacilitiesMemberVO" alias="reqFacilitiesMemberVO"/>
+			<typeAlias type="kr.maxerve.admin.reserve.vo.ReqFacilitiesMemberInfoVO" alias="reqFacilitiesMemberInfoVO"/>
+	    	<typeAlias type="kr.maxerve.admin.reserve.vo.ReqFacilitiesMasterVO" alias="reqFacilitiesMasterVO"/>
+	    	<typeAlias type="kr.maxerve.admin.reserve.vo.ReqFacilitiesMasterIVO" alias="reqFacilitiesMasterIVO"/>
+	    	<typeAlias type="kr.maxerve.admin.reserve.vo.ReqFacilitiesReserveVO" alias="reqFacilitiesReserveVO"/>
+	    	<typeAlias type="kr.maxerve.admin.cmmn.vo.ReqFileVO" alias="reqFileVO"/>
+	    	<typeAlias type="kr.maxerve.admin.account.vo.ReqManagerMemberVO" alias="reqManagerMemberVO"/>
+	    	<typeAlias type="kr.maxerve.admin.reserve.vo.ReqMakerspaceClassVO" alias="reqMakerspaceClassVO"/>
+	    	<typeAlias type="kr.maxerve.admin.member.vo.ReqMemberVO" alias="reqMemberVO"/>
+	    	<typeAlias type="kr.maxerve.admin.member.vo.ReqMoveInOztnVO" alias="reqMoveInOztnVO"/>
+	    	<typeAlias type="kr.maxerve.admin.information.vo.ReqNewsLetterVO" alias="reqNewsLetterVO"/>
+	    	<typeAlias type="kr.maxerve.admin.information.vo.ReqNoticeVO" alias="reqNoticeVO"/>
+	    	<typeAlias type="kr.maxerve.admin.adjust.vo.ReqOrganizationSummaryVO" alias="reqOrganizationSummaryVO"/>
+	    	<typeAlias type="kr.maxerve.admin.reserve.vo.ReqParkTourVO" alias="reqParkTourVO" />
+	    	<typeAlias type="kr.maxerve.admin.adjust.vo.ReqPaymentVO" alias="reqPaymentVO"/>
+	    	<typeAlias type="kr.maxerve.admin.activity.vo.ReqProjectVO" alias="reqProjectVO"/>
+	    	<typeAlias type="kr.maxerve.admin.activity.vo.ReqProposeVO" alias="reqProposeVO"/>
+	    	<typeAlias type="kr.maxerve.admin.information.vo.ReqRecruitVO" alias="reqRecruitVO"/>
+	    	<typeAlias type="kr.maxerve.admin.reserve.vo.ReqRentAreaVO" alias="reqRentAreaVO"/>
+	    	<typeAlias type="kr.maxerve.admin.activity.vo.ReqReferenceVO" alias="reqReferenceVO"/>
+	    	<typeAlias type="kr.maxerve.admin.adjust.vo.ReqSponsorVO" alias="reqSponsorVO"/>
+	    	<typeAlias type="kr.maxerve.admin.adjust.vo.ReqSponsorAdjustVO" alias="reqSponsorAdjustVO"/>
+	    	<typeAlias type="kr.maxerve.admin.activity.vo.ReqSympathyTalkVO" alias="reqSympathyTalkVO"/>
+	    	<typeAlias type="kr.maxerve.admin.activity.vo.ReqSympathyTalkReferenceVO" alias="reqSympathyTalkReferenceVO"/>
+	    	<typeAlias type="kr.maxerve.admin.information.vo.ReqSubscriberVO" alias="reqSubscriberVO"/>
+
+			<!-- ***MVO -->
+			<typeAlias type="kr.maxerve.admin.adjust.vo.AdjustHistoryMVO" alias="adjustHistoryMVO"/>
+			<typeAlias type="kr.maxerve.admin.adjust.vo.AdjustOrganizationMVO" alias="adjustOrganizationMVO"/>
+			<typeAlias type="kr.maxerve.admin.adjust.vo.AdjustSummaryMVO" alias="adjustSummaryMVO"/>
+			<typeAlias type="kr.maxerve.admin.banner.vo.BannerMVO" alias="bannerMVO"/>
+			<typeAlias type="kr.maxerve.admin.reserve.vo.CalenderFacilitiesReserveMVO" alias="calenderFacilitiesReserveMVO"/>
+			<typeAlias type="kr.maxerve.admin.activity.vo.EventMVO" alias="eventMVO"/>
+			<typeAlias type="kr.maxerve.admin.reserve.vo.FacilitiesMemberMVO" alias="facilitiesMemberMVO"/>
+			<typeAlias type="kr.maxerve.admin.reserve.vo.FacilitiesReserveMVO" alias="facilitiesReserveMVO"/>
+			<typeAlias type="kr.maxerve.admin.file.vo.FileMVO" alias="fileMVO"/>
+	    	<typeAlias type="kr.maxerve.admin.facilities.vo.MakerspaceClassMVO" alias="makerspaceClassMVO"/>
+	    	<typeAlias type="kr.maxerve.admin.reserve.vo.MakerspaceClassReserveMVO" alias="makerspaceClassReserveMVO"/>
+	    	<typeAlias type="kr.maxerve.admin.reserve.vo.MakerspaceClassReserveInfoMVO" alias="makerspaceClassReserveInfoMVO"/>
+	    	<typeAlias type="kr.maxerve.admin.login.vo.ManagerMemberMVO" alias="managerMemberMVO"/>
+	    	<typeAlias type="kr.maxerve.admin.member.vo.MemberMVO" alias="memberMVO"/>
+	    	<typeAlias type="kr.maxerve.admin.member.vo.MemberChannelMVO" alias="memberChannelMVO"/>
+	    	<typeAlias type="kr.maxerve.admin.member.vo.MoveInOztnMVO" alias="moveInOztnMVO"/>
+	    	<typeAlias type="kr.maxerve.admin.information.vo.NewsLetterMVO" alias="newsLetterMVO"/>
+	    	<typeAlias type="kr.maxerve.admin.information.vo.NoticeMVO" alias="noticeMVO"/>
+	    	<typeAlias type="kr.maxerve.admin.reserve.vo.ParkTourMVO" alias="parkTourMVO" />
+	    	<typeAlias type="kr.maxerve.admin.payment.vo.PaymentMVO" alias="paymentMVO"/>
+	    	<typeAlias type="kr.maxerve.admin.adjust.vo.PaymentSummaryMVO" alias="paymentSummaryMVO"/>
+			<typeAlias type="kr.maxerve.admin.activity.vo.ProjectMVO" alias="projectMVO"/>
+			<typeAlias type="kr.maxerve.admin.activity.vo.ProposeMVO" alias="proposeMVO"/>
+			<typeAlias type="kr.maxerve.admin.information.vo.RecruitMVO" alias="recruitMVO"/>
+			<typeAlias type="kr.maxerve.admin.activity.vo.ReferenceMVO" alias="referenceMVO"/>
+			<typeAlias type="kr.maxerve.admin.adjust.vo.SponsorMVO" alias="sponsorMVO"/>
+			<typeAlias type="kr.maxerve.admin.information.vo.SubscriberMVO" alias="subscriberMVO"/>
+			<typeAlias type="kr.maxerve.admin.activity.vo.SympathyTalkMVO" alias="sympathyTalkMVO"/>
+			<typeAlias type="kr.maxerve.admin.activity.vo.SympathyTalkReferenceMVO" alias="sympathyTalkReferenceMVO"/>
+			<typeAlias type="kr.maxerve.admin.reserve.vo.TourCarMVO" alias="tourCarMVO"/>
+
+
+			<!-- ***VO -->
+	    	<typeAlias type="kr.maxerve.admin.calendar.vo.CalendarVO" alias="calendarVO"/>
+	    	<typeAlias type="kr.maxerve.admin.comment.vo.CommentVO" alias="commentVO"/>
+	    	<typeAlias type="kr.maxerve.admin.file.vo.FileVO" alias="fileVO"/>
+	    	<typeAlias type="kr.maxerve.admin.login.vo.LoginVO" alias="loginVO"/>
+	    	<typeAlias type="kr.maxerve.admin.cmmn.vo.MultiCommonCodeVO" alias="multiCommonCodeVO"/>
+
+
+			<!-- ***DTO -->
+			<typeAlias type="kr.maxerve.dto.AdjustHistoryDTO" alias="adjustHistoryDTO"/>
+			<typeAlias type="kr.maxerve.dto.AdjustOrganizationDTO" alias="adjustOrganizationDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.AttachFileDTO" alias="attachFileDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.AttachTagDTO" alias="attachTagDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.BannerDTO" alias="bannerDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.CalendarDTO" alias="calendarDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.CategoryDTO" alias="categoryDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.CommentDTO" alias="commentDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.CommonCodeDTO" alias="commonCodeDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.EventDTO" alias="eventDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.EquipmentMasterDTO" alias="equipmentMasterDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.FacilitiesEquipmentDTO" alias="facilitiesEquipmentDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.FacilitiesMasterDTO" alias="facilitiesMasterDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.FacilitiesScheduleDTO" alias="facilitiesScheduleDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.FacilitiesFloorDTO" alias="facilitiesFloorDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.FacilitiesInfoDTO" alias="facilitiesInfoDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.FacilitiesReserveDTO" alias="facilitiesReserveDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.FileDTO" alias="fileDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.MakerspaceClassDTO" alias="makerspaceClassDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.MakerspaceClassCurriculumDTO" alias="makerspaceClassCurriculumDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.MakerspaceClassGroupDTO" alias="makerspaceClassGroupDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.ManagerMemberDTO" alias="managerMemberDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.ManagerMenuDTO" alias="managerMenuDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.MoveInApplyDTO" alias="moveInApplyDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.MoveInApplyCtgrDTO" alias="moveInApplyCtgrDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.NewsLetterDTO" alias="newsletterDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.NoticeDTO" alias="noticeDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.PayFeesDTO" alias="payFeesDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.ProjectDTO" alias="projectDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.ProposeDTO" alias="proposeDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.RecruitRoomDTO" alias="recruitDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.ReferenceRoomDTO" alias="referenceRoomDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.ReferenceRoomYoutubeDTO" alias="referenceRoomYoutubeDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.RentTheAreaDTO" alias="rentTheAreaDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.RentTheAreaFacilitiesDTO" alias="rentTheAreaFacilitiesDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.SimpleResourceDTO" alias="simpleResourceDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.SmsDTO" alias="smsDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.SympathyTalkDTO" alias="sympathyTalkDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.SympathyTalkReferenceDTO" alias="sympathyTalkReferenceDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.TagDTO" alias="tagDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.TimeDTO" alias="timeDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.TourApplyDTO" alias="tourApplyDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.TourAttendDTO" alias="tourAttendDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.WoodparkClassDTO" alias="woodparkClassDTO"/>
+	    	<typeAlias type="kr.maxerve.dto.WoodparkClassScheduleDTO" alias="woodparkClassScheduleDTO"/>
+
+	    </typeAliases>
+
+	    <typeHandlers>
+	        <!--  java.sql.Timestamp 를 java.util.Date 형으로 반환 -->
+	        <typeHandler javaType="java.sql.Timestamp" handler="org.apache.ibatis.type.DateTypeHandler"/>
+	        <typeHandler javaType="java.sql.Time"      handler="org.apache.ibatis.type.DateTypeHandler"/>
+	        <typeHandler javaType="java.sql.Date"      handler="org.apache.ibatis.type.DateTypeHandler"/>
+	    </typeHandlers>
+    </configuration>

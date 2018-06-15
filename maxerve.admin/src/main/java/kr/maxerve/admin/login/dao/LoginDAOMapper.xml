@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.maxerve.admin.login.loginDAO">
+
+<select id="selectLoginInfo" parameterType="loginVO" resultType="managerMemberMVO">
+	SELECT
+		MNGR_MBR_IDX,
+		MNGR_MBR_ID,
+		MNGR_MBR_PWD,
+		MNGR_MBR_NM,
+		EMIL,
+		PHN,
+		DEL_YN,
+		MNGR_MBR_DPT,
+		CRE_DTTM
+	FROM
+		TBL_MNGR_MBR
+	WHERE
+		MNGR_MBR_ID = #{uid}
+	AND MNGR_MBR_PWD = #{pwd}
+	AND USE_YN = 'Y'
+	AND DEL_YN != 'Y'
+</select>
+
+</mapper>

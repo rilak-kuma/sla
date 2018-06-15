@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd" >
+<properties>
+    <entry key="fail.common.msg">error ocurred!</entry>
+    <entry key="fail.common.sql">sql error ocurred! error code: {0}, error msg: {1}</entry>
+    <entry key="info.nodata.msg">no data found.</entry>
+<!--     #UI resource# -->
+    <entry key="button.search">Search</entry>
+<!--     # image name # -->
+    <entry key="image.search">btn_form_search_en.gif</entry>
+    <entry key="image.errorBg">error_en</entry>
+    
+   <entry key="title.sample.name">Category Name</entry>
+   <entry key="title.sample.description">Description</entry>
+   <entry key="title.sample.regUser">User Name</entry>
+</properties>

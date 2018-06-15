@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.maxerve.admin.cmmn.commonCodeDAO">
+	<resultMap type="multiCommonCodeVO" id="multiCommonCodeMap">
+		<id property="cmmnCd" column="CMMN_CD"/>
+		<result property="dep1" column="DEP1"/>
+		<result property="dep2" column="DEP2"/>
+		<result property="cmmnCdNm" column="CMMN_CD_NM"/>
+		<collection property="subList" ofType="commonCodeDTO">
+			<id property="cmmnCd" column="CMMN_CD_2"/>
+			<result property="dep2" column="DEP2_2"/>
+			<result property="dep1" column="DEP1_2"/>
+			<result property="cmmnCdNm" column="CMMN_CD_NM_2"/>
+		</collection>
+	</resultMap>
+
+<!-- 	공통코드 목록 -->
+	<select id="selectList" parameterType="commonCodeDTO" resultType="commonCodeDTO">
+		SELECT
+			CMMN_CD cmmnCd,
+			DEP1 dep1,
+			DEP2 dep2,
+			DEP3 dep3,
+			CMMN_CD_NM cmmnCdNm
+		FROM
+			TBL_CMMN_CD
+		WHERE
+			DEL_YN != 'Y'
+	<if test="dep2 == null or dep2.equals('')">
+		AND DEP1 = #{dep1}
+	</if>
+	<if test="dep2 != null and !dep2.equals('')">
+		AND DEP2 = #{dep2}
+	</if>
+		ORDER BY
+			ORD,
+			LENGTH(CMMN_CD) ASC
+	</select>
+
+<!-- 	2depth용 공통코드 목록 -->
+	<select id="selectList2" parameterType="commonCodeDTO" resultMap="multiCommonCodeMap">
+		SELECT
+			TB1.CMMN_CD,
+			TB1.DEP1,
+			TB1.DEP2,
+			TB1.DEP3,
+			TB1.CMMN_CD_NM,
+			TB2.CMMN_CD CMMN_CD_2,
+			TB2.DEP1 DEP1_2,
+			TB2.DEP2 DEP2_2,
+			TB2.DEP3 DEP3_2,
+			TB2.CMMN_CD_NM CMMN_CD_NM_2
+		FROM
+			TBL_CMMN_CD TB1,
+			TBL_CMMN_CD TB2
+		WHERE
+			TB1.DEL_YN != 'Y'
+		AND TB1.DEP1 = #{dep1}
+		AND TB2.DEL_YN != 'Y'
+		AND TB2.DEP1 = #{dep1}
+		AND TB2.DEP2 = TB1.CMMN_CD
+		ORDER BY
+			TB1.CMMN_CD ASC,
+			TB2.CMMN_CD
+	</select>
+
+</mapper>

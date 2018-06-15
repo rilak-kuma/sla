@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:security="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.2.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.2.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.2.xsd">
+
+	<!-- Root Context: defines shared resources visible to all other web components -->
+
+	<context:component-scan base-package="kr.maxerve.admin">
+	    <context:include-filter type="annotation" expression="org.springframework.stereotype.Service" />
+	    <context:include-filter type="annotation" expression="org.springframework.stereotype.Repository" />
+       <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller" />
+    </context:component-scan>
+
+    <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+	    <property name="locations">
+	        <list>
+	            <value>classpath:/properties/db_properties.xml</value>
+	            <value>classpath:/properties/properties.xml</value>
+	        </list>
+	    </property>
+	</bean>
+
+    <!-- bean id="messageSource" class="kr.maxerve.admin.framework.CustomReloadableResourceBundleMessageSource">
+		<property name="defaultEncoding" value="UTF-8"/>
+		<property name="basenames">
+			<list>
+				<value>classpath:/message/message-common</value>
+			</list>
+		</property>
+		<property name="cacheSeconds">
+			<value>60</value>
+		</property>
+	</bean-->
+
+<!-- 	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close"> -->
+<!--         <property name="driverClassName" value="oracle.jdbc.driver.OracleDriver"/> -->
+<!--         <property name="url" value="jdbc:oracle:thin:@192.168.30.24:1521/SSCallDB"/> -->
+<!--         <property name="username" value="fmcvs"/> -->
+<!--         <property name="password" value="fmcvs"/> -->
+<!--     </bean> -->
+
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+        <property name="driverClassName" value="${jdbc.database.driver}"/>
+        <property name="url" value="${jdbc.database.url}"/>
+        <property name="username" value="${jdbc.database.username}"/>
+        <property name="password" value="${jdbc.database.password}"/>
+        <property name="initialSize" value="${jdbc.database.initialSize}"/>
+		<property name="minIdle" value="${jdbc.database.minIdle}"/>
+		<property name="maxIdle" value="${jdbc.database.maxIdle}"/>
+		<property name="maxActive" value="${jdbc.database.maxActive}"/>
+		<property name="maxWait" value="${jdbc.database.maxWait}"/>
+		<property name="poolPreparedStatements" value="true"/>
+		<property name="defaultAutoCommit" value="false"/>
+		<property name="validationQuery" value=" SELECT 1 FROM DUAL" />
+    </bean>
+
+    <bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+	  <property name="dataSource" ref="dataSource"/>
+	</bean>
+
+	<tx:annotation-driven transaction-manager="txManager" />
+
+	<tx:advice id="txAdvice" transaction-manager="txManager">
+		<tx:attributes>
+			<tx:method name="*" rollback-for="Exception"/>
+		</tx:attributes>
+	</tx:advice>
+
+<!-- 	transaction -->
+	<aop:config>
+		<aop:pointcut id="requiredTx" expression="execution(* kr.maxerve..impl.*Impl.*(..))"/>
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="requiredTx" />
+	</aop:config>
+
+    <!-- bean id="propertiesService" class="kr.maxerve.admin.framework.CustomPropertiesFactoryBean">
+	    <property name="fileEncoding" value="UTF-8"/>
+        <property name="locations">
+            <list>
+            	<value>classpath:/properties/common_properties.xml</value>
+                <value>classpath:/properties/properties.xml</value>
+            </list>
+        </property>
+    </bean-->
+
+<!--     <bean id="propertiesService" class="org.springframework.beans.factory.config.PropertiesFactoryBean"> -->
+<!-- 	    <property name="fileEncoding" value="UTF-8"/> -->
+<!--         <property name="locations"> -->
+<!--             <list> -->
+<!--             	<value>classpath:/properties/common_properties.xml</value> -->
+<!--                 <value>classpath:/properties/properties.xml</value> -->
+<!--             </list> -->
+<!--         </property> -->
+<!--     </bean> -->
+
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		    <property name="dataSource" ref="dataSource"/>
+	    <property name="configLocation" value="classpath:mybatis-config-base.xml" />
+	    <property name="mapperLocations">
+            <list>
+                <value>classpath*:kr/maxerve/**/dao/*Mapper.xml</value>
+            </list>
+        </property>
+	</bean>
+
+	<bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+		<constructor-arg ref="sqlSessionFactory" />
+	</bean>
+
+	<!-- bean id="serviceAop" class="kr.maxerve.admin.framework.ServiceAOP"/>
+    <aop:config>
+        <aop:pointcut id="servicePointcut" expression="execution(* kr.maxerve.admin..impl.*Impl.*(..))" />
+
+	    <aop:aspect ref="serviceAop">
+	        <aop:around method="serviceAOP" pointcut-ref="servicePointcut"/>
+	    </aop:aspect>
+	</aop:config-->
+
+<!-- 	mail sender -->
+	<bean id="javaMailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+		<property name="host" value="${mail.sender.host}" />
+		<property name="defaultEncoding" value="UTF-8"/>
+	</bean>
+
+	<bean id="velocityEngine" class="org.springframework.ui.velocity.VelocityEngineFactoryBean">
+		<property name="velocityProperties">
+			<value>
+			input.encoding=UTF-8
+			output.encoding=UTF-8
+			response.encoding=UTF-8
+			resource.loader=class
+			class.resource.loader.class=org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader
+			</value>
+		</property>
+	</bean>
+
+<!-- 	<bean id="facebookoAuth2Parameters" class="org.springframework.social.oauth2.OAuth2Parameters"> -->
+<!-- 		<property name="scope" value="email"/> -->
+<!-- 		<property name="redirectUri" value="${spring.social.facebook.redirect.url}"/> -->
+<!-- 	</bean> -->
+
+	<security:http pattern="/favicon.ico" security="none"></security:http>
+
+	<security:http auto-config="true" use-expressions="true" disable-url-rewriting="true">
+		<security:intercept-url pattern="/member/login*" access="permitAll"/>
+		<security:intercept-url pattern="/cmmn/messagesource.*" access="permitAll"/>
+<!-- 		<security:intercept-url pattern="/cmmn/editor_upload.*" access="permitAll"/> -->
+<!-- 		<security:intercept-url pattern="/cmmn/messagesource*" access="permitAll"/> -->
+<!-- 		<security:intercept-url pattern="/sample/*" access="permitAll"/> -->
+		<security:intercept-url pattern="/basic/account/mypage*" access="hasRole('ROLE_USER')"/>
+		<security:intercept-url pattern="/basic/account/updateMyinfo*" access="hasRole('ROLE_USER')"/>
+
+		<!-- 관리자 권한 관리 -->
+		<security:intercept-url pattern="/basic/account/insert*" access="hasRole('023001002Y')"/>
+		<security:intercept-url pattern="/basic/account/update*" access="hasRole('023001002Y')"/>
+		<security:intercept-url pattern="/basic/account/**" access="hasRole('023001002')"/>
+
+		<!-- 카테고리 관리 -->
+		<security:intercept-url pattern="/basic/category/insert*" access="hasRole('023001003Y')"/>
+		<security:intercept-url pattern="/basic/category/update*" access="hasRole('023001003Y')"/>
+		<security:intercept-url pattern="/basic/category/delete*" access="hasRole('023001003Y')"/>
+		<security:intercept-url pattern="/basic/category/update_order*" access="hasRole('023001003Y')"/>
+		<security:intercept-url pattern="/basic/category/**" access="hasRole('023001003')"/>
+
+		<!-- 태그관리 -->
+		<security:intercept-url pattern="/basic/popular_search_word/insert*" access="hasRole('023001004Y')"/>
+		<security:intercept-url pattern="/basic/popular_search_word/**" access="hasRole('023001004')"/>
+
+		<!-- SMS관리 -->
+		<security:intercept-url pattern="/basic/sms/insert*" access="hasRole('023001005Y')"/>
+		<security:intercept-url pattern="/basic/sms/**" access="hasRole('023001005')"/>
+
+		<!-- 메인배너관리 -->
+		<security:intercept-url pattern="/banner/main*" access="hasRole('023002001')"/>
+		<security:intercept-url pattern="/banner/insertMain*" access="hasRole('023002001Y')"/>
+		<security:intercept-url pattern="/banner/updateMain*" access="hasRole('023002001Y')"/>
+
+		<!-- 혁신배너관리 -->
+		<security:intercept-url pattern="/banner/inno*" access="hasRole('023002002')"/>
+		<security:intercept-url pattern="/banner/insertInno*" access="hasRole('023002002Y')"/>
+		<security:intercept-url pattern="/banner/updateInno*" access="hasRole('023002002Y')"/>
+
+		<!-- 배너삭제 -->
+		<security:intercept-url pattern="/banner/deleteBanner*" access="hasAnyRole('023002001Y', '023002002Y')"/>
+
+		<!-- 입주단체관리 -->
+		<security:intercept-url pattern="/member/currentState*" access="hasRole('023003001')"/>
+		<security:intercept-url pattern="/member/moveInOztn*" access="hasRole('023003001')"/>
+		<security:intercept-url pattern="/member/updateMoveInOztn*" access="hasRole('023003001Y')"/>
+
+		<!-- 신규입주관리 -->
+		<security:intercept-url pattern="/member/newMoveInAply*" access="hasRole('023003002')"/>
+		<security:intercept-url pattern="/member/updateNewMoveIn*" access="hasRole('023003002Y')"/>
+
+		<!-- 온라인멤버 -->
+		<security:intercept-url pattern="/member/onlineMember*" access="hasRole('023003003')"/>
+
+		<!-- 제안 -->
+		<security:intercept-url pattern="/activity/propose/propose*" access="hasRole('023004001')"/>
+		<security:intercept-url pattern="/activity/propose/updatePropose*" access="hasRole('023004001Y')"/>
+		<security:intercept-url pattern="/activity/propose/deletePropose*" access="hasRole('023004001Y')"/>
+
+		<!-- 프로젝트 -->
+		<security:intercept-url pattern="/activity/project/project*" access="hasRole('023004002')"/>
+		<security:intercept-url pattern="/activity/project/updateProject*" access="hasRole('023004002Y')"/>
+		<security:intercept-url pattern="/activity/project/deleteProject*" access="hasRole('023004002Y')"/>
+
+		<!-- 이벤트/행사 -->
+		<security:intercept-url pattern="/activity/event/event*" access="hasRole('023004003')"/>
+		<security:intercept-url pattern="/activity/event/updateEvent*" access="hasRole('023004003Y')"/>
+		<security:intercept-url pattern="/activity/event/deleteEvent*" access="hasRole('023004003Y')"/>
+
+		<!-- 자료실 -->
+		<security:intercept-url pattern="/activity/referenceRoom/reference*" access="hasRole('023004004')"/>
+		<security:intercept-url pattern="/activity/referenceRoom/updateReference*" access="hasRole('023004004Y')"/>
+		<security:intercept-url pattern="/activity/referenceRoom/deleteReference*" access="hasRole('023004004Y')"/>
+		<security:intercept-url pattern="/activity/referenceRoom/popularTag*" access="hasRole('023004004')"/>
+		<security:intercept-url pattern="/activity/referenceRoom/insertPopularTag*" access="hasRole('023004004Y')"/>
+
+		<!-- 시설예약현황 -->
+		<security:intercept-url pattern="/reserve/facilities/reserve_*" access="hasRole('023005001')"/>
+		<security:intercept-url pattern="/reserve/facilities/updateReserve*" access="hasRole('023005001Y')"/>
+
+		<!-- 시설일정관리 -->
+		<security:intercept-url pattern="/reserve/facilities/insert.do" access="hasAnyRole('023005002', '023005005')"/>
+		<security:intercept-url pattern="/reserve/facilities/insert.json" access="hasAnyRole('023005002Y', '023005005Y')"/>
+		<security:intercept-url pattern="/reserve/facilities/makerspace_class_insert*" access="hasRole('023005002Y')"/>
+		<security:intercept-url pattern="/reserve/facilities/makerspace_class_delete*" access="hasRole('023005002Y')"/>
+		<security:intercept-url pattern="/reserve/facilities/woodpark_class_insert*" access="hasRole('023005002Y')"/>
+		<security:intercept-url pattern="/reserve/facilities/woodpark_class_schedule_insert*" access="hasRole('023005002Y')"/>
+		<security:intercept-url pattern="/reserve/facilities/woodpark_class_schedule*" access="hasRole('023005002')"/>
+		<security:intercept-url pattern="/reserve/facilities/equip_insert*" access="hasRole('023005002Y')"/>
+		<security:intercept-url pattern="/reserve/facilities/**" access="hasAnyRole('023005001', '023005002')"/>
+
+		<!-- 파크투어 신청현황 -->
+		<security:intercept-url pattern="/reserve/facilities/parktour_insert*" access="hasRole('023005004Y')"/>
+		<security:intercept-url pattern="/reserve/facilities/parktour*" access="hasRole('023005004')"/>
+
+		<!-- 결제 -->
+		<security:intercept-url pattern="/adjust/pay/detail.*" access="hasAnyRole('023006001', '023006002', '023006003')"/>
+		<security:intercept-url pattern="/adjust/pay/*" access="hasRole('023006001')"/>
+
+		<!-- 정산 -->
+		<security:intercept-url pattern="/adjust/adjust/*" access="hasRole('023006002')"/>
+		<security:intercept-url pattern="/adjust/adjust/*_insert" access="hasRole('023006002Y')"/>
+
+		<!-- 후원금 -->
+		<security:intercept-url pattern="/adjust/sponsor/*" access="hasRole('023006003')"/>
+
+		<!-- 공지사항 -->
+		<security:intercept-url pattern="/information/notice/notice*" access="hasRole('023007001')"/>
+		<security:intercept-url pattern="/information/notice/insert*" access="hasRole('023007001Y')"/>
+		<security:intercept-url pattern="/information/notice/update*" access="hasRole('023007001Y')"/>
+		<security:intercept-url pattern="/information/notice/delete*" access="hasRole('023007001Y')"/>
+
+		<!-- 뉴스레터 -->
+		<security:intercept-url pattern="/information/newsletter/newsletter*" access="hasRole('023007002')"/>
+		<security:intercept-url pattern="/information/newsletter/insert*" access="hasRole('023007002Y')"/>
+		<security:intercept-url pattern="/information/newsletter/update*" access="hasRole('023007002Y')"/>
+		<security:intercept-url pattern="/information/newsletter/subscriberList*" access="hasRole('023007002')"/>
+
+		<!-- 구인 -->
+		<security:intercept-url pattern="/information/recruit/recruit*" access="hasRole('023007003')"/>
+		<security:intercept-url pattern="/information/recruit/update*" access="hasRole('023007003Y')"/>
+		<security:intercept-url pattern="/information/recruit/delete*" access="hasRole('023007003Y')"/>
+
+		<!-- 미래청 -->
+		<security:intercept-url pattern="/information/recruit/update*" access="hasRole('023008001Y')"/>
+		<security:intercept-url pattern="/information/recruit/delete*" access="hasRole('023008001Y')"/>
+		<security:intercept-url pattern="/facilities/future/**" access="hasRole('023008001')"/>
+
+		<security:intercept-url pattern="/**" access="hasRole('ROLE_USER')"/>
+		<security:form-login login-page="/member/login.do"
+			username-parameter="uid"
+			password-parameter="upw"
+			login-processing-url="/member/loginProc.json"
+			default-target-url="/member/loginSuccess.json"
+			authentication-failure-url="/member/loginFailure.json"
+			always-use-default-target="true"/>
+		<security:custom-filter ref="ajaxSessionTimeoutFilter" after="EXCEPTION_TRANSLATION_FILTER"/>
+	</security:http>
+
+	<bean class="org.springframework.security.web.access.expression.DefaultWebSecurityExpressionHandler" />
+
+	<security:authentication-manager>
+		<security:authentication-provider ref="customAuthenticationProvider" />
+	</security:authentication-manager>
+<!-- 
+	<bean id="customAuthenticationProvider" class="kr.maxerve.admin.framework.CustomAuthenticationProvider" />
+	<bean id="ajaxSessionTimeoutFilter" class="kr.maxerve.admin.framework.AjaxSessionTimeoutFilter">
+		<property name="ajaxHeader" value="SKIPAUTH"/>
+	</bean>
+-->
+</beans>

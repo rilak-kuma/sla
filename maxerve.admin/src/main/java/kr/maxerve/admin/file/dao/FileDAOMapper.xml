@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.maxerve.file.fileDAO">
+<!-- 파일목록 -->
+<select id="selectFileList" parameterType="fileDTO" resultType="fileDTO">
+	SELECT
+		FILE_PATH,
+		TMN_PATH,
+		ORIG_FILE_NM,
+		FILE_TYP_CD,
+		WDTH,
+		HGTH,
+		FILE_SIZE,
+		CNTT_TYP,
+		CRE_DTTM
+	FROM
+		TBL_FILE
+	WHERE 1=1
+	<if test='filePath != null and filePath != ""'>
+		AND FILE_PATH = #{filePath}
+	</if>
+	<if test='tmnPath != null and tmnPath != ""'>
+		AND TMN_PATH = #{tmnPath}
+	</if>
+</select>
+
+<!-- 첨부파일목록 -->
+<select id="selectAttachList" parameterType="attachFileDTO" resultType="fileMVO">
+	SELECT
+		TB2.FILE_PATH	filePath	,
+		TB2.TMN_PATH	tmnPath	,
+		TB2.ORIG_FILE_NM	origFileNm	,
+		TB2.FILE_TYP_CD	fileTypCd	,
+		TB2.WDTH	wdth	,
+		TB2.HGTH	hgth	,
+		TB2.FILE_SIZE	fileSize	,
+		TB2.CNTT_TYP	cnttTyp	,
+		TB2.CRE_DTTM	creDttm,
+		TB1.FILE_INFO
+	FROM
+		TBL_ATC_FILE TB1,
+		TBL_FILE TB2
+	WHERE
+		TB1.ATC_LOC_CD = #{atcLocCd}
+	AND TB1.ATC_LOC_IDX = #{atcLocIdx}
+	AND	TB1.FILE_PATH = TB2.FILE_PATH
+	ORDER BY
+		TB1.ORD
+</select>
+
+<!-- 파일등록 -->
+<insert id="insertFile" parameterType="fileDTO">
+	INSERT
+	INTO
+		TBL_FILE(
+			FILE_PATH,   		<!-- VARCHAR(200) NOT NULL COMMENT '파일패스' -->
+			TMN_PATH,   		<!-- VARCHAR(200) NOT NULL COMMENT '섬네일패스' -->
+			ORIG_FILE_NM,       <!-- VARCHAR(50) NOT NULL COMMENT '원본파일명' -->
+			FILE_TYP_CD,        <!-- VARCHAR(50) NOT NULL COMMENT '파일 타입 공통코드' -->
+			WDTH,               <!-- INT(11) NOT NULL COMMENT '이미지 폭' -->
+			HGTH,               <!-- INT(11) NOT NULL COMMENT '이미지 높이' -->
+			FILE_SIZE,          <!-- INT(11) NOT NULL COMMENT '파일크기' -->
+			CNTT_TYP,           <!-- VARCHAR(50) NOT NULL COMMENT '컨텐츠 타입' -->
+			CRE_DTTM            <!-- DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '등록일시' -->
+		)
+	VALUES(
+		#{filePath},
+		#{tmnPath},
+		#{origFileNm},
+		#{fileTypCd},
+		#{wdth},
+		#{hgth},
+		#{fileSize},
+		#{cnttTyp},
+		CURRENT_TIMESTAMP
+	)
+</insert>
+
+<!-- 첨부파일 등록 -->
+<insert id="insertAtcFile" parameterType="attachFileDTO">
+	INSERT INTO
+		TBL_ATC_FILE
+	(
+		ATC_LOC_CD	,		<!--	VARCHAR(50) NOT NULL COMMENT '첨부소재지 공통코드(010)', 				-->
+		ATC_LOC_IDX	,		<!--	INT(11) NOT NULL COMMENT '첨부소재지 인덱스',            				-->
+		ORD			,		<!--	INT(11) NOT NULL COMMENT '순서',                     				-->
+		FILE_PATH	,		<!--	VARCHAR(200) NOT NULL COMMENT '파일경로',              				-->
+		FILE_INFO			<!--	VARCHAR(100) NOT NULL COMMENT '파일설명',              				-->
+		)
+	VALUES(
+		#{atcLocCd},
+		#{atcLocIdx},
+		#{ord},
+		#{filePath},
+		#{fileInfo}
+	)
+</insert>
+
+<!-- 첨부파일 삭제 -->
+<delete id="deleteAtcFile" parameterType="attachFileDTO">
+	DELETE
+	FROM
+		TBL_ATC_FILE
+	WHERE
+		ATC_LOC_CD = #{atcLocCd}
+	AND ATC_LOC_IDX = #{atcLocIdx}
+</delete>
+
+
+<update id="updateFile" parameterType="reqFileVO">
+	UPDATE
+		TBL_FILE
+	SET
+		FILE_PATH = #{reqFilePath}
+	<if test='tmnPath != null and tmnPath != ""'>
+		,TMN_PATH = #{tmnPath}
+	</if>
+	WHERE
+		FILE_PATH = #{filePath}
+</update>
+
+<delete id="deleteFile" parameterType="fileDTO">
+	DELETE
+	FROM
+		TBL_FILE
+	WHERE FILE_PATH = #{filePath}
+</delete>
+
+</mapper>

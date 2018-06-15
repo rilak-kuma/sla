@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd" >
+<properties>
+<!--     # validator check # -->
+    <entry key="framework.error.default">오류가 발생되었습니다.</entry>
+
+   <entry key="result.code.0000">성공</entry>
+    <entry key="result.code.0001">아이디와 비밀번호를 확인해 주십시요.</entry>
+    <entry key="result.code.0002">비밀번호가 일치하지 않습니다.</entry>
+    <entry key="result.code.0003">존재하는 아이디입니다.</entry>
+    <entry key="result.code.0004">이미 추천하셨습니다.</entry>
+    <entry key="result.code.0005">이미 투표하셨습니다.</entry>
+    <entry key="result.code.9999">유효성 검증에 실패하였습니다.</entry>
+
+    <entry key="org.hibernate.validator.constraints.NotEmpty.message">{0} 필수입니다.</entry>
+    <entry key="validator.password.not.equal">비밀번호와 비밀번호 확인이 일치하지 않습니다.</entry>
+    <entry key="org.hibernate.validator.constraints.Email.message">올바른 이메일 형식이 아닙니다.</entry>
+    <entry key="validator.password.equals.establish">기존 비밀번호는 사용하실 수 없습니다.</entry>
+    <entry key="invalid.password.rule">비밀번호는 영문,숫자 포함한 8자 이상이여야합니다.</entry>
+    <entry key="invalid.idCheck.rule">아이디 중복확인을 해 주십시요.</entry>
+    <entry key="invalid.auth.require">권한은 필수입니다.</entry>
+
+    <entry key="msg.save.success">저장되었습니다.</entry>
+    <entry key="msg.member.id.valid">사용가능한 아이디입니다.</entry>
+    <entry key="msg.deleted">삭제되었습니다.</entry>
+    <entry key="confirm.delete">삭제하시겠습니까?</entry>
+</properties>

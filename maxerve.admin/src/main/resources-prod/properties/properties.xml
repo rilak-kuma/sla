@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd" >
+<properties>
+    <entry key="upload.path.root">/data/was_data</entry>
+	<entry key="server.http_host">imsia.maxerve.kr</entry>
+	<entry key="user.server.http_host">imsi.maxerve.kr</entry>
+    <entry key="spring.social.facebook.appId">670599129769281</entry>
+    <entry key="spring.social.facebook.appSecret">2ae2ae48081df87524e165c7b77b0aff</entry>
+    <entry key="spring.social.twitter.consumer.key">Ka3Hs0TW7EDUrR7r0xiG3v8dq</entry>
+    <entry key="spring.social.twitter.consumer.secret">B3GXRWWi2v7wC5E5PCvV5zWCdaExBorhgJkGcCc4n4xxlg0cii</entry>
+    <entry key="spring.social.google.clientId">436429781081-n2e0s48ksfis8e8k5t1dia7ckjngf4ed.apps.googleusercontent.com</entry>
+    <entry key="spring.social.google.secret">VfGIIRfXOnChwpI-5PF6fhcU</entry>
+    <entry key="spring.social.naver.client.id">FnukEJZcGx2BSsDSKAlg</entry>
+    <entry key="spring.social.naver.client.secret">aJ_iXT08MK</entry>
+    <entry key="spring.social.daum.client.id">4639744454561626199</entry>
+    <entry key="spring.social.daum.secret">2ce7977c41e8c6c9ea78b9d9b788a65e</entry>
+    <entry key="spring.social.kakao.client.id">9986cb84b22c0e0e886ab8bc3db6e3d0</entry>
+<!--     우편번호 -->
+    <entry key="addr.confm.key">U01TX0FVVEgyMDE2MDkwMTE1NDgyMzE1MDE3</entry>
+<!--     메일 -->
+	<entry key="mail.sender.host">localhost</entry>
+<!-- 	메일발송자 -->
+	<entry key="mail.sender">maxerve@maxerve.kr</entry>
+ </properties>

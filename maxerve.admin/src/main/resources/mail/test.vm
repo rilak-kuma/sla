@@ -1,0 +1,6 @@
+<!DOCTYPE html>
+<html>
+<body>
+this is test mail. ${message} ok.
+</body>
+</html>
