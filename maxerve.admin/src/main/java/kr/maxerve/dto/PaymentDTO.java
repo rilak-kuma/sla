@@ -1,5 +1,22 @@
 package kr.maxerve.dto;
 
+/**
+* PaymentDTO
+* @author LEEC.J
+* @since 2018.06.10
+* @version 1.0
+* @see
+*
+* <pre>
+* 결제
+* TBL_PAY
+* << 개정이력(Modification Information) >>
+*
+* 수정일        수정자        수정내용
+* ----------      --------       ----------------------------------
+* 2018.06.10     LEEC.J        최초 생성
+* </pre>
+*/
 public class PaymentDTO {
 	private String payIdx = "";			// INT(11) NOT NULL AUTO_INCREMENT COMMENT '결제 인덱스',
 	private String mbrIdx = "";			// INT(11) NOT NULL COMMENT '회원코드',

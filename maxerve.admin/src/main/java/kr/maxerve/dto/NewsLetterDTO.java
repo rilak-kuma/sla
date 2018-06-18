@@ -1,5 +1,22 @@
 package kr.maxerve.dto;
 
+/**
+* NewsLetterDTO
+* @author LEEC.J
+* 2018.06.22
+* @version 1.0
+* @see
+*
+* <pre>
+* 뉴스레터
+* TBL_NEWS_LTTR
+* << 개정이력(Modification Information) >>
+*
+* 수정일        수정자        수정내용
+* ----------      --------       ----------------------------------
+* 2018.06.22     LEEC.J        최초 생성
+* </pre>
+*/
 public class NewsLetterDTO {
 	private String newsLttrIdx = "";			// INT(11) NOT NULL AUTO_INCREMENT COMMENT '뉴스레터 인덱스',
 	private String newsLttrNo = "";			// VARCHAR(50) NOT NULL COMMENT '뉴스레터 호',

@@ -1,5 +1,22 @@
 package kr.maxerve.dto;
 
+/**
+* ReferenceRoomDTO
+* @author LEEC.J
+* 2018.06.22
+* @version 1.0
+* @see
+*
+* <pre>
+* 자료실
+* TBL_REF_ROOM
+* << 개정이력(Modification Information) >>
+*
+* 수정일        수정자        수정내용
+* ----------      --------       ----------------------------------
+* 2018.06.22     LEEC.J        최초 생성
+* </pre>
+*/
 public class ReferenceRoomDTO {
 	private String refRoomIdx = "";		// int(11) nOT NULL AUTOINCREMENT COMMENT '자료실 인덱스'
 	private String mbrIdx = "";			// int(11) nOT NULL COMMENT '회원 인덱스'

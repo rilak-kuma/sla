@@ -1,5 +1,22 @@
 package kr.maxerve.dto;
 
+/**
+* SurveyQuestionDTO
+* @author LEEC.J
+* @since 2018.06.01
+* @version 1.0
+* @see
+*
+* <pre>
+* 설문질문
+* TBL_SVY
+* << 개정이력(Modification Information) >>
+*
+* 수정일        수정자        수정내용
+* ----------      --------       ----------------------------------
+* 2018.06.01     LEEC.J        최초 생성
+* </pre>
+*/
 public class SurveyQuestionDTO {
 	private String svyQstnIdx    = ""; 		// INT(11) NOT NULL AUTO_INCREMENT COMMENT '질문인덱스',
 	private String grpIdx		  = ""; 		// INT(11) NOT NULL DEFAULT '0' COMMENT '그룹인덱스(질문인덱스와 같으면 질문)',
