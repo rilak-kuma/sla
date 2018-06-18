@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.maxerve.admin.activity.projectDAO">
+	
+	<select id="selectProjectList" parameterType="reqProjectVO" resultType="projectMVO" >
+	SELECT *
+	FROM (
+			SELECT
+				@rownum:=@rownum+1	rownum,
+				A.PJT_IDX		pjtIdx,			<!-- 프로젝트 인덱스	int(11) -->
+				A.MBR_IDX		mbrIdx,			<!-- 회원 인덱스	int(11) -->
+				(SELECT C.CTGR_NM FROM TBL_CTGR C WHERE C.CTGR_IDX = A.CTGR_IDX AND C.DEL_YN = 'N')		ctgrIdxNm,		<!-- 카테고리명	varchar(50) -->
+				A.PJT_TITL		pjtTitl,		<!-- 프로젝트 제목		varchar(50) -->	
+				DATE_FORMAT(A.CRE_DTTM, '%Y.%m.%d')		creDttm,		<!-- 생성일	datetime -->
+				B.CEO_NM 		ceoNm,			<!-- 등록자명(ceo명) -->
+	      		B.OZTN_NM 		oztnNm,			<!-- 단체명	-->
+	      		CASE WHEN A.USE_YN = 'Y' AND DATE_FORMAT(NOW(), '%Y%m%d') BETWEEN DATE_FORMAT(A.SRT_DTTM, '%Y%m%d') AND  DATE_FORMAT(A.END_DTTM, '%Y%m%d') THEN 'Y'ELSE 'N' END useYn
+			FROM
+				TBL_PJT A,
+				TBL_MBR B,
+				(SELECT @rownum:=0) ROW
+			WHERE
+	      		A.MBR_IDX = B.MBR_IDX
+			AND	DEL_YN = 'N'
+			<if test='ctgrIdx != null and ctgrIdx != ""'>
+				AND	A.CTGR_IDX	=	#{ctgrIdx}
+			</if>
+			<if test='useYn == "Y"'>
+				AND	(
+					A.USE_YN = 'Y'
+					AND DATE_FORMAT(NOW(), '%Y%m%d') BETWEEN DATE_FORMAT(A.SRT_DTTM, '%Y%m%d') AND  DATE_FORMAT(A.END_DTTM, '%Y%m%d')
+					)
+			</if>
+			<if test='useYn == "N"'>
+				AND	(
+					A.USE_YN = 'N'
+					OR DATE_FORMAT(NOW(), '%Y%m%d') NOT BETWEEN DATE_FORMAT(A.SRT_DTTM, '%Y%m%d') AND  DATE_FORMAT(A.END_DTTM, '%Y%m%d')
+					)
+			</if>
+	      	<if test='creDttmOne != null and creDttmOne != ""'>	
+				AND DATE_FORMAT(A.CRE_DTTM, '%Y%m%d') >= REPLACE(#{creDttmOne}, '.', '')
+			</if>
+			<if test='creDttmTwo != null and creDttmTwo != ""'>	
+				<![CDATA[AND DATE_FORMAT(A.CRE_DTTM, '%Y%m%d') <= REPLACE(#{creDttmTwo}, '.', '')]]>
+			</if>
+			<if test='pjtTitl != null and pjtTitl != ""'>
+				AND	A.PJT_TITL LIKE CONCAT('%', #{pjtTitl}, '%')
+			</if>
+			ORDER BY A.PJT_IDX DESC
+		) Z
+		ORDER BY rownum DESC
+		LIMIT ${pageInfo.firstRecordIndex}, ${pageInfo.recordCountPerPage}
+	</select>
+	
+	<select id="selectProjectListCnt" parameterType="reqProjectVO" resultType="int" >
+		SELECT
+			COUNT(1) totalRecordCount
+		FROM
+			TBL_PJT A
+		WHERE
+      		DEL_YN = 'N'
+      	<if test='creDttmOne != null and creDttmOne != ""'>	
+			AND DATE_FORMAT(A.CRE_DTTM, '%Y%m%d') >= REPLACE(#{creDttmOne}, '.', '')
+		</if>
+		<if test='creDttmTwo != null and creDttmTwo != ""'>	
+			<![CDATA[AND DATE_FORMAT(A.CRE_DTTM, '%Y%m%d') <= REPLACE(#{creDttmTwo}, '.', '')]]>
+		</if>
+		<if test='pjtTitl != null and pjtTitl != ""'>
+			AND	A.PJT_TITL LIKE CONCAT('%', #{pjtTitl}, '%')
+		</if>
+		<if test='ctgrIdx != null and ctgrIdx != ""'>
+			AND	A.CTGR_IDX	=	#{ctgrIdx}
+		</if>
+	</select>
+	
+	<select id="selectProjectTotalCnt" resultType="int" >
+		SELECT
+			COUNT(1) totalRecordCount
+		FROM
+			TBL_PJT A
+		WHERE
+      		DEL_YN = 'N'
+	</select>
+	
+	<select id="selectProjectInfo" parameterType="String" resultType="projectMVO" >
+		SELECT
+			A.PJT_IDX		pjtIdx,			<!-- 프로젝트 인덱스	int(11) -->
+			A.MBR_IDX		mbrIdx,			<!-- 회원 인덱스	int(11) -->
+			A.MNGR_MBR_IDX	MngrMbrIdx,		<!-- 수정자	int(11) -->
+			(SELECT C.CTGR_NM FROM TBL_CTGR C WHERE C.CTGR_IDX = A.CTGR_IDX AND C.DEL_YN = 'N')		ctgrIdxNm,		<!-- 카테고리명	varchar(50) -->
+			A.PJT_TITL		pjtTitl,		<!-- 프로젝트 제목	varchar(50) -->	
+			A.HIT_CNT		hitCnt,			<!-- 조회수	int(11) -->
+			A.USE_YN 		useYn,			<!-- 사용여부	varchar(1) -->
+			A.PJT_INFO		pjtInfo,		<!-- 정보		varchar(1000) -->
+			A.BODY			body,			<!-- 본문		mediumtext -->
+			A.SPO_AOM		spoAom,			<!-- 후원금액	varchar(50) -->
+			A.SRT_DTTM		srtDttm,		<!-- 신청시작일시	datetime -->
+			A.END_DTTM		endDttm,		<!-- 신청종료일시	datetime -->
+			A.CRE_DTTM		creDttm,		<!-- 생성일	datetime -->
+			A.MOD_DTTM		modDttm,		<!-- 수정일	datetime -->
+			B.CEO_NM 		ceoNm,			<!-- 등록자명(ceo명) -->
+      		B.OZTN_NM 		oztnNm			<!-- 단체명	-->
+		FROM
+			TBL_PJT A,
+     	 	TBL_MBR B
+		WHERE
+      		A.MBR_IDX = B.MBR_IDX
+		AND A.DEL_YN = 'N'
+		AND A.PJT_IDX	=	#{pjtIdx}		<!-- 프로젝트 인덱스	int(11) -->
+	</select>
+
+	<select id="updateProject" parameterType="projectDTO" >
+		UPDATE
+			TBL_PJT
+		SET
+	<if test='delYn != null and delYn != ""'>
+			DEL_YN			=	#{delYn}, 		<!-- 삭제여부	varchar(1) -->
+	</if>
+			MNGR_MBR_IDX	=	#{mngrMbrIdx},	<!-- 수정자 인덱스	int(11) -->
+			USE_YN			=	#{useYn}		<!-- 사용여부	varchar(1) -->
+		WHERE
+			PJT_IDX	=	#{pjtIdx}				<!-- 프로젝트 인덱스	int(11) -->
+	</select>
+</mapper>

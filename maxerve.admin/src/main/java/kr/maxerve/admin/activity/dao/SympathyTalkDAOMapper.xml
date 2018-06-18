@@ -1,0 +1,578 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.maxerve.admin.activity.sympathyTalkDAO">
+
+	<insert id="insertFsw" parameterType="sympathyTalkDTO">
+		INSERT INTO
+			TBL_FSW_TALK
+					(
+						MNGR_MBR_IDX,
+						TITL,
+						BODY,
+						ORD,
+						SRT_DT,
+						END_DT,
+						USE_YN
+					)
+			VALUES	(
+						#{mngrMbrIdx},		<!-- 관리자 인덱스	int(11) -->
+						#{titl},			<!-- 제목	varchar(50) -->
+						#{body},			<!-- 본문	mediumtext -->
+						#{ord},				<!-- 노출순서	int(11) -->
+						#{srtDt},			<!-- 시작일	varchar(10) -->
+						#{endDt},			<!-- 종료일	varchar(10) -->
+						#{useYn}			<!-- 사용여부	varchar(1) -->
+					)
+	</insert>
+
+	<select id="selectSympathyTalkTotalCnt" resultType="int">
+		SELECT
+			COUNT(1) totalRecordCount
+		FROM
+			TBL_FSW_TALK
+		WHERE
+			DEL_YN = 'N'
+      	<if test='creDttmOne != null and creDttmOne != ""'>
+			AND DATE_FORMAT(CRE_DTTM, '%Y%m%d') >= REPLACE(#{creDttmOne}, '.', '')
+		</if>
+		<if test='creDttmTwo != null and creDttmTwo != ""'>
+			<![CDATA[AND DATE_FORMAT(CRE_DTTM, '%Y%m%d') <= REPLACE(#{creDttmTwo}, '.', '')]]>
+		</if>
+		<if test='titl != null and titl != ""'>
+			AND	TITL LIKE CONCAT('%', #{titl}, '%')
+		</if>
+		<if test='useYn == "Y"'>
+			AND	USE_YN = #{useYn}
+			AND DATE_FORMAT(NOW(), '%Y%m%d') BETWEEN REPLACE(SRT_DT, '.', '') AND  REPLACE(END_DT, '.', '')
+		</if>
+		<if test='useYn == "N"'>
+			AND	(
+				USE_YN = #{useYn}
+				OR DATE_FORMAT(NOW(), '%Y%m%d') NOT BETWEEN REPLACE(SRT_DT, '.', '') AND  REPLACE(END_DT, '.', '')
+				)
+		</if>
+	</select>
+
+	<select id="selectFswList" parameterType="reqSympathyTalkVO" resultType="sympathyTalkMVO">
+	SELECT *
+	FROM (
+			SELECT
+				@rownum:=@rownum+1	rownum,
+				FSW_TALK_IDX        fswTalkIdx,	<!-- 공감토크 인덱스 -->
+				TITL                titl,		<!-- 제목 -->
+				ORD					ord,		<!-- 노출순서  -->
+				SRT_DT              srtDt,		<!-- 시작일 -->
+				END_DT				endDt,		<!-- 종료일 -->
+				CASE WHEN USE_YN = 'Y' AND DATE_FORMAT(NOW(), '%Y%m%d') BETWEEN REPLACE(SRT_DT, '.', '') AND  REPLACE(END_DT, '.', '') THEN 'Y'ELSE 'N' END useYn	<!-- 사용여부 -->
+			FROM
+				TBL_FSW_TALK,
+				(SELECT @rownum:=0) ROW
+			WHERE
+				DEL_YN = 'N'
+	      	<if test='creDttmOne != null and creDttmOne != ""'>
+				AND DATE_FORMAT(CRE_DTTM, '%Y%m%d') >= REPLACE(#{creDttmOne}, '.', '')
+			</if>
+			<if test='creDttmTwo != null and creDttmTwo != ""'>
+				<![CDATA[AND DATE_FORMAT(CRE_DTTM, '%Y%m%d') <= REPLACE(#{creDttmTwo}, '.', '')]]>
+			</if>
+			<if test='titl != null and titl != ""'>
+				AND	TITL LIKE CONCAT('%', #{titl}, '%')
+			</if>
+			<if test='useYn == "Y"'>
+				AND	USE_YN = #{useYn}
+				AND DATE_FORMAT(NOW(), '%Y%m%d') BETWEEN REPLACE(SRT_DT, '.', '') AND  REPLACE(END_DT, '.', '')
+			</if>
+			<if test='useYn == "N"'>
+				AND	(
+					USE_YN = #{useYn}
+					OR DATE_FORMAT(NOW(), '%Y%m%d') NOT BETWEEN REPLACE(SRT_DT, '.', '') AND  REPLACE(END_DT, '.', '')
+					)
+			</if>
+			ORDER BY FSW_TALK_IDX ASC
+		) Z
+		ORDER BY rownum ASC
+		LIMIT #{pageInfo.firstRecordIndex}, #{pageInfo.recordCountPerPage}
+	</select>
+
+	<select id="selectFswListCnt" parameterType="reqSympathyTalkVO" resultType="int">
+		SELECT
+			COUNT(1) totalRecordCount
+		FROM
+			TBL_FSW_TALK
+		WHERE
+			DEL_YN = 'N'
+		<if test='creDttmOne != null and creDttmOne != ""'>
+			AND DATE_FORMAT(CRE_DTTM, '%Y%m%d') >= REPLACE(#{creDttmOne}, '.', '')
+		</if>
+		<if test='creDttmTwo != null and creDttmTwo != ""'>
+			<![CDATA[AND DATE_FORMAT(CRE_DTTM, '%Y%m%d') <= REPLACE(#{creDttmTwo}, '.', '')]]>
+		</if>
+		<if test='titl != null and titl != ""'>
+			AND	TITL LIKE CONCAT('%', #{titl}, '%')
+		</if>
+		<if test='useYn == "Y"'>
+			AND	USE_YN = #{useYn}
+			AND DATE_FORMAT(NOW(), '%Y%m%d') BETWEEN REPLACE(SRT_DT, '.', '') AND  REPLACE(END_DT, '.', '')
+		</if>
+		<if test='useYn == "N"'>
+			AND	(
+				USE_YN = #{useYn}
+				OR DATE_FORMAT(NOW(), '%Y%m%d') NOT BETWEEN REPLACE(SRT_DT, '.', '') AND  REPLACE(END_DT, '.', '')
+				)
+		</if>
+	</select>
+
+	<select id="selectUseFswList" resultType="sympathyTalkMVO">
+		SELECT
+			FSW_TALK_IDX        fswTalkIdx,						<!-- 공감토크 인덱스 -->
+			TITL                titl,							<!-- 제목 -->
+			ORD					ord,							<!-- 노출순서 -->
+			SRT_DT              srtDt,							<!-- 시작일 -->
+			END_DT				endDt,							<!-- 종료일 -->
+			USE_YN              useYn							<!-- 사용여부 -->
+		FROM
+			TBL_FSW_TALK
+		WHERE
+			DEL_YN = 'N'
+		AND	USE_YN = 'Y'
+		AND DATE_FORMAT(NOW(), '%Y%m%d') BETWEEN REPLACE(SRT_DT, '.', '') AND  REPLACE(END_DT, '.', '')
+		ORDER BY ORD ASC
+	</select>
+
+	<select id="selectFswInfo" parameterType="String" resultType="sympathyTalkMVO">
+		SELECT
+			FSW_TALK_IDX        fswTalkIdx,		<!-- 공감토크 인덱스 -->
+			MNGR_MBR_IDX        mngrMbrIdx,		<!-- 관리자 인덱스  -->
+			TITL                titl,			<!-- 제목 -->
+			BODY                body,			<!-- 본문 -->
+			ORD                 ord,			<!-- 노출순서 -->
+			SRT_DT              srtDt,			<!-- 시작일 -->
+			END_DT              endDt,			<!-- 종료일 -->
+			USE_YN              useYn,			<!-- 사용여부 -->
+			CRE_DTTM            creDttm,		<!-- 생성일시 -->
+			MOD_DTTM            modDttm			<!-- 수정일시 -->
+		FROM
+			TBL_FSW_TALK
+		WHERE
+			DEL_YN = 'N'
+		AND	FSW_TALK_IDX  =	#{fswTalkIdx}
+	</select>
+
+	<update id="updateFsw" parameterType="sympathyTalkDTO">
+		UPDATE
+			TBL_FSW_TALK
+		SET
+	<choose>
+		<when test='delYn != null and delYn != ""'>
+			DEL_YN		=		#{delYn} 		<!-- 삭제여부	varchar(1) -->
+		</when>
+		<otherwise>
+			TITL        =		#{titl},		<!-- 제목 -->
+			BODY        =		#{body},		<!-- 본문 -->
+			ORD         =		#{ord},			<!-- 노출순서 -->
+			SRT_DT      =		#{srtDt},		<!-- 시작일 -->
+			END_DT      =		#{endDt},		<!-- 종료일 -->
+			USE_YN		=		#{useYn}		<!-- 사용여부 -->
+		</otherwise>
+	</choose>
+		WHERE
+			FSW_TALK_IDX	=	#{fswTalkIdx}
+	</update>
+
+	<select id="selectMaxOrd" resultType="int">
+		SELECT
+			COALESCE(MAX(ORD)+1,1)	 maxOrd		<!-- MAX 노출순서 -->
+		FROM
+			TBL_FSW_TALK
+		WHERE
+			DEL_YN = 'N'
+		AND	USE_YN = 'Y'
+		AND DATE_FORMAT(NOW(), '%Y%m%d') BETWEEN REPLACE(SRT_DT, '.', '') AND  REPLACE(END_DT, '.', '')
+	</select>
+
+	<select id="selectFswTalkIdx" parameterType="sympathyTalkDTO" resultType="String">
+		SELECT
+			MAX(FSW_TALK_IDX)	 fswTalkIdx	<!-- 공감토크 인덱스 -->
+		FROM
+			TBL_FSW_TALK
+		WHERE
+			MNGR_MBR_IDX = #{mngrMbrIdx}
+	</select>
+
+	<select id="selectSymTalkReferenceList" parameterType="reqSympathyTalkReferenceVO" resultType="sympathyTalkReferenceMVO">
+		<choose>
+			<when test='locTypCd == "010002"'>
+				SELECT
+					'010002'    		LOC_TYP_CD,
+					FNC_CMMN_CD_NM('010002') LOC_TYP_CD_NM,
+					A.PRP_IDX			LOC_IDX,
+					A.TITL,
+					B.CEO_NM,
+					B.OZTN_NM,
+					A.CRE_DTTM,
+					(	SELECT COUNT(1)
+			   			FROM
+			   				TBL_CMMT C
+			   			WHERE
+			   				C.CMMT_LOC_CD = '010002'
+			   			AND	C.TBL_IDX = A.PRP_IDX
+			   			AND DEL_YN = 'N'	)	CMMT_CNT
+				FROM
+					TBL_PRP A,
+					TBL_MBR B
+				WHERE
+			      	A.MBR_IDX = B.MBR_IDX
+				AND	A.DEL_YN = 'N'
+			 	AND A.USE_YN = 'Y'
+			</when>
+			<when test='locTypCd == "010004"'>
+				SELECT
+			        '프로젝트'  		locTypCdNm,
+			        '010004'    	locTypCd,
+					A.PJT_IDX		locIdx,
+					A.PJT_TITL		titl,
+					B.CEO_NM 		ceoNm,
+		      		B.OZTN_NM 		oztnNm,
+		      		A.CRE_DTTM,
+					(	SELECT COUNT(1)
+		     			FROM
+		     				TBL_CMMT C
+		     			WHERE
+		     				C.CMMT_LOC_CD = '010004'
+		     			AND	C.TBL_IDX = A.PJT_IDX
+		     			AND DEL_YN = 'N'	)		cmmtCnt
+				FROM
+					TBL_PJT A,
+					TBL_MBR B
+				WHERE
+			      	A.MBR_IDX = B.MBR_IDX
+				AND	A.DEL_YN = 'N'
+			    AND A.USE_YN = 'Y'
+			</when>
+			<when test='locTypCd == "010005"'>
+				SELECT
+			        '010005'    	LOC_TYP_CD,
+			        FNC_CMMN_CD_NM('010005') LOC_TYP_CD_NM
+					A.EVT_IDX		LOC_IDX,
+					A.EVT_TITL		TITL,
+					B.CEO_NM,
+			      	B.OZTN_NM,
+			      	A.CRE_DTTM,
+					(	SELECT COUNT(1)
+		    			FROM
+		    				TBL_CMMT C
+		    			WHERE
+		    				C.CMMT_LOC_CD = '010005'
+		    			AND	C.TBL_IDX = A.EVT_IDX
+		    			AND DEL_YN = 'N'	)		CMMT_CNT
+				FROM
+					TBL_EVT A,
+					TBL_MBR B
+				WHERE
+				    A.MBR_IDX = B.MBR_IDX
+				AND	A.DEL_YN = 'N'
+		      	AND A.USE_YN = 'Y'
+			</when>
+			<when test='locTypCd == "010007"'>
+				SELECT
+		            '자료실'  		locTypCdNm,
+		        	'010007'    	locTypCd,
+					A.REF_ROOM_IDX	locIdx,
+					A.TITL			titl,
+					B.CEO_NM 		ceoNm,
+		      		B.OZTN_NM 		oztnNm,
+		      		A.CRE_DTTM,
+					(	SELECT COUNT(1)
+		     			FROM
+		     				TBL_CMMT C
+		     			WHERE
+		     				C.CMMT_LOC_CD = '010007'
+		     			AND	C.TBL_IDX = A.REF_ROOM_IDX
+		     			AND DEL_YN = 'N'	)		cmmtCnt
+				FROM
+					TBL_REF_ROOM A,
+		     	 	TBL_MBR B
+				WHERE
+		      		A.MBR_IDX = B.MBR_IDX
+				AND	A.DEL_YN = 'N'
+		    	AND A.USE_YN = 'Y'
+			</when>
+			<otherwise>
+				SELECT *
+				FROM
+					(
+					SELECT
+						'010002'    		LOC_TYP_CD,
+						FNC_CMMN_CD_NM('010002') LOC_TYP_CD_NM,
+						A.PRP_IDX			LOC_IDX,
+						A.TITL,
+						B.CEO_NM,
+						B.OZTN_NM,
+						A.CRE_DTTM,
+						(	SELECT COUNT(1)
+				   			FROM
+				   				TBL_CMMT C
+				   			WHERE
+				   				C.CMMT_LOC_CD = '010002'
+				   			AND	C.TBL_IDX = A.PRP_IDX
+				   			AND DEL_YN = 'N'	)	CMMT_CNT
+					FROM
+						TBL_PRP A,
+						TBL_MBR B
+					WHERE
+				      	A.MBR_IDX = B.MBR_IDX
+					AND	A.DEL_YN = 'N'
+				 	AND A.USE_YN = 'Y'
+			<if test='fswTalkIdx != "" and fswTalkIdx != null'>
+					AND A.PRP_IDX IN (
+											SELECT
+												LOC_IDX
+											FROM
+												TBL_FSW_TALK_REL
+											WHERE
+												FSW_TALK_IDX = #{fswTalkIdx}
+											AND LOC_TYP_CD = '010002'
+											)
+			</if>
+					UNION ALL
+
+					SELECT
+				        '프로젝트'  		locTypCdNm,
+				        '010004'    	locTypCd,
+						A.PJT_IDX		locIdx,
+						A.PJT_TITL		titl,
+						B.CEO_NM 		ceoNm,
+			      		B.OZTN_NM 		oztnNm,
+			      		A.CRE_DTTM,
+						(	SELECT COUNT(1)
+			     			FROM
+			     				TBL_CMMT C
+			     			WHERE
+			     				C.CMMT_LOC_CD = '010004'
+			     			AND	C.TBL_IDX = A.PJT_IDX
+			     			AND DEL_YN = 'N'	)		cmmtCnt
+					FROM
+						TBL_PJT A,
+						TBL_MBR B
+					WHERE
+				      	A.MBR_IDX = B.MBR_IDX
+					AND	A.DEL_YN = 'N'
+				    AND A.USE_YN = 'Y'
+			<if test='fswTalkIdx != "" and fswTalkIdx != null'>
+					AND A.PJT_IDX IN (
+											SELECT
+												LOC_IDX
+											FROM
+												TBL_FSW_TALK_REL
+											WHERE
+												FSW_TALK_IDX = #{fswTalkIdx}
+											AND LOC_TYP_CD = '010004'
+											)
+			</if>
+					UNION ALL
+
+					SELECT
+				        '010005'    	LOC_TYP_CD,
+				        FNC_CMMN_CD_NM('010005') LOC_TYP_CD_NM,
+						A.EVT_IDX		LOC_IDX,
+						A.EVT_TITL		TITL,
+						B.CEO_NM,
+				      	B.OZTN_NM,
+				      	A.CRE_DTTM,
+						(	SELECT COUNT(1)
+			    			FROM
+			    				TBL_CMMT C
+			    			WHERE
+			    				C.CMMT_LOC_CD = '010005'
+			    			AND	C.TBL_IDX = A.EVT_IDX
+			    			AND DEL_YN = 'N'	)		CMMT_CNT
+					FROM
+						TBL_EVT A,
+						TBL_MBR B
+					WHERE
+					    A.MBR_IDX = B.MBR_IDX
+					AND	A.DEL_YN = 'N'
+			      	AND A.USE_YN = 'Y'
+			<if test='fswTalkIdx != "" and fswTalkIdx != null'>
+					AND A.EVT_IDX IN (
+											SELECT
+												LOC_IDX
+											FROM
+												TBL_FSW_TALK_REL
+											WHERE
+												FSW_TALK_IDX = #{fswTalkIdx}
+											AND LOC_TYP_CD = '010005'
+											)
+			</if>
+					UNION ALL
+
+					SELECT
+			            '자료실'  		locTypCdNm,
+			        	'010007'    	locTypCd,
+						A.REF_ROOM_IDX	locIdx,
+						A.TITL			titl,
+						B.CEO_NM 		ceoNm,
+			      		B.OZTN_NM 		oztnNm,
+			      		A.CRE_DTTM,
+						(	SELECT COUNT(1)
+			     			FROM
+			     				TBL_CMMT C
+			     			WHERE
+			     				C.CMMT_LOC_CD = '010007'
+			     			AND	C.TBL_IDX = A.REF_ROOM_IDX
+			     			AND DEL_YN = 'N'	)		cmmtCnt
+					FROM
+						TBL_REF_ROOM A,
+			     	 	TBL_MBR B
+					WHERE
+			      		A.MBR_IDX = B.MBR_IDX
+					AND	A.DEL_YN = 'N'
+			    	AND A.USE_YN = 'Y'
+			<if test='fswTalkIdx != "" and fswTalkIdx != null'>
+					AND A.REF_ROOM_IDX IN (
+											SELECT
+												LOC_IDX
+											FROM
+												TBL_FSW_TALK_REL
+											WHERE
+												FSW_TALK_IDX = #{fswTalkIdx}
+											AND LOC_TYP_CD = '010007'
+											)
+			</if>
+				)	A
+			</otherwise>
+		</choose>
+			ORDER BY A.CRE_DTTM DESC
+		<if test='fswTalkIdx == "" or fswTalkIdx == null'>
+			LIMIT #{pageInfo.firstRecordIndex}, #{pageInfo.recordCountPerPage}
+		</if>
+	</select>
+
+	<select id="selectSymTalkReferenceListCnt" parameterType="reqSympathyTalkReferenceVO" resultType="int">
+		<choose>
+			<when test='locTypCd == "010002"'>
+				SELECT
+					COUNT(A.PRP_IDX) totalRecordCount
+				FROM
+					TBL_PRP A,
+					TBL_MBR B
+				WHERE
+			      	A.MBR_IDX = B.MBR_IDX
+				AND	A.DEL_YN = 'N'
+			 	AND A.USE_YN = 'Y'
+			</when>
+			<when test='locTypCd == "010004"'>
+				SELECT
+					COUNT(A.PJT_IDX) totalRecordCount
+				FROM
+					TBL_PJT A,
+					TBL_MBR B
+				WHERE
+			      	A.MBR_IDX = B.MBR_IDX
+				AND	A.DEL_YN = 'N'
+			    AND A.USE_YN = 'Y'
+			</when>
+			<when test='locTypCd == "010005"'>
+				SELECT
+					COUNT(A.EVT_IDX) totalRecordCount
+				FROM
+					TBL_EVT A,
+					TBL_MBR B
+				WHERE
+				    A.MBR_IDX = B.MBR_IDX
+				AND	A.DEL_YN = 'N'
+		      	AND A.USE_YN = 'Y'
+			</when>
+			<when test='locTypCd == "010007"'>
+				SELECT
+					COUNT(A.REF_ROOM_IDX) totalRecordCount
+				FROM
+					TBL_REF_ROOM A,
+		     	 	TBL_MBR B
+				WHERE
+		      		A.MBR_IDX = B.MBR_IDX
+				AND	A.DEL_YN = 'N'
+		    	AND A.USE_YN = 'Y'
+			</when>
+			<otherwise>
+				SELECT
+					COUNT(1) totalRecordCount
+				FROM
+					(
+					SELECT
+						A.PRP_IDX
+					FROM
+						TBL_PRP A,
+						TBL_MBR B
+					WHERE
+				      	A.MBR_IDX = B.MBR_IDX
+					AND	A.DEL_YN = 'N'
+				 	AND A.USE_YN = 'Y'
+
+					UNION ALL
+
+					SELECT
+						A.PJT_IDX
+					FROM
+						TBL_PJT A,
+						TBL_MBR B
+					WHERE
+				      	A.MBR_IDX = B.MBR_IDX
+					AND	A.DEL_YN = 'N'
+				    AND A.USE_YN = 'Y'
+
+					UNION ALL
+
+					SELECT
+						A.EVT_IDX
+					FROM
+						TBL_EVT A,
+						TBL_MBR B
+					WHERE
+					    A.MBR_IDX = B.MBR_IDX
+					AND	A.DEL_YN = 'N'
+			      	AND A.USE_YN = 'Y'
+
+					UNION ALL
+
+					SELECT
+						A.REF_ROOM_IDX
+					FROM
+						TBL_REF_ROOM A,
+			     	 	TBL_MBR B
+					WHERE
+			      		A.MBR_IDX = B.MBR_IDX
+					AND	A.DEL_YN = 'N'
+			    	AND A.USE_YN = 'Y'
+				)	A
+			</otherwise>
+		</choose>
+	</select>
+
+	<insert id="insertSympathyTalkReference" parameterType="sympathyTalkReferenceDTO">
+		INSERT INTO
+			TBL_FSW_TALK_REL
+							(
+							  FSW_TALK_IDX,
+							  LOC_TYP_CD,
+							  LOC_IDX
+							)
+		VALUES
+							(
+							#{fswTalkIdx},	<!-- 공감토크인덱스	int(11) -->
+							#{locTypCd},	<!-- 소재지 공통코드(010)	varchar(50) -->
+							#{locIdx}		<!-- 소재지 인덱스	int(11) -->
+							)
+	</insert>
+
+	<update id="deleteSympathyTalkReference" parameterType="String">
+		DELETE
+		FROM
+			TBL_FSW_TALK_REL
+		WHERE
+			FSW_TALK_IDX	=	#{fswTalkIdx}	<!-- 공감토크인덱스	int(11) -->
+	</update>
+
+</mapper>

@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.maxerve.admin.information.noticeDAO">
+
+	<select id="selectNoticelist" parameterType="reqNoticeVO" resultType="noticeMVO">
+	      SELECT
+				TB1.NTC_IDX,		<!-- 공지 인덱스 -->
+				TB1.MNGR_MBR_IDX,	<!-- 등록관리자 인덱스 -->
+				TB1.TITL,			<!-- 제목 -->
+				TB1.HIT_CNT,		<!-- 조회수 -->
+				TB1.USE_YN,			<!-- 사용여부 -->
+				TB1.CRE_DTTM,		<!-- 생성일시 -->
+				TOP_YN,				<!-- 상단공지여부 -->
+				TB2.MNGR_MBR_DPT,	<!-- 부서 -->
+				TB2.MNGR_MBR_NM		<!-- 이름 -->
+			FROM
+				TBL_NTC TB1,
+				TBL_MNGR_MBR TB2
+			WHERE
+				TB1.MNGR_MBR_IDX = TB2.MNGR_MBR_IDX
+				AND TB1.USE_YN	=	'Y'
+			    AND TB1.TOP_YN = 'Y'
+			    AND TB1.DEL_YN = 'N'
+	    		<![CDATA[AND DATE_FORMAT(TB1.CRE_DTTM, '%Y%m%d') <= DATE_FORMAT(NOW(), '%Y%m%d')]]>
+		UNION
+			SELECT *
+			FROM(
+			      SELECT
+						TB1.NTC_IDX,		<!-- 공지 인덱스 -->
+						TB1.MNGR_MBR_IDX,	<!-- 등록관리자 인덱스 -->
+						TB1.TITL,			<!-- 제목 -->
+						TB1.HIT_CNT,		<!-- 조회수 -->
+						TB1.USE_YN,			<!-- 사용여부 -->
+						TB1.CRE_DTTM,		<!-- 생성일시 -->
+						TOP_YN,				<!-- 상단공지여부 -->
+						TB2.MNGR_MBR_DPT,	<!-- 부서 -->
+						TB2.MNGR_MBR_NM		<!-- 이름 -->
+					FROM
+						TBL_NTC TB1,
+						TBL_MNGR_MBR TB2
+					WHERE
+						TB1.MNGR_MBR_IDX = TB2.MNGR_MBR_IDX
+					AND	TB1.DEL_YN = 'N'
+					AND DATE_FORMAT(TB1.CRE_DTTM, '%Y%m%d') BETWEEN REPLACE(#{creDttmOne}, '.', '') AND REPLACE(#{creDttmTwo}, '.', '')
+					<if test='useYn != null and useYn != ""'>
+						AND	TB1.USE_YN	=	#{useYn}
+					</if>
+					<if test='titl != null and titl != ""'>
+						AND TB1.TITL	LIKE	CONCAT('%', #{titl}, '%')
+					</if>
+					<if test='mngrMbrNm != null and mngrMbrNm != ""'>
+						AND	TB1.MNGR_MBR_IDX	IN	(
+													SELECT
+												  		MNGR_MBR_IDX
+													FROM
+												  		TBL_MNGR_MBR
+												  	WHERE
+												  		MNGR_MBR_NM = #{mngrMbrNm}
+												 )
+					</if>
+					ORDER BY
+						<if test="sortType == 'sortOne_1'">
+							TB1.CRE_DTTM ASC,
+						</if>
+						<if test="sortType == 'sortOne_2'">
+							TB1.CRE_DTTM DESC,
+						</if>
+						<if test="sortType == 'sortTwo_1'">
+							TB1.USE_YN ASC,
+						</if>
+						<if test="sortType == 'sortTwo_2'">
+							TB1.USE_YN DESC,
+						</if>
+							TB1.NTC_IDX DESC
+					LIMIT ${pageInfo.firstRecordIndex}, ${pageInfo.recordCountPerPage}
+					) A
+	</select>
+	
+	<select id="selectNoticelistCnt" parameterType="reqNoticeVO" resultType="int">
+		SELECT
+			COUNT(1) totalRecordCount
+		FROM
+			TBL_NTC
+		WHERE
+			DEL_YN = 'N'
+		AND DATE_FORMAT(CRE_DTTM, '%Y%m%d') BETWEEN REPLACE(#{creDttmOne}, '.', '') AND REPLACE(#{creDttmTwo}, '.', '')
+		<if test='useYn != null and useYn != ""'>
+			AND	USE_YN	=	#{useYn}
+		</if>
+		<if test='titl != null and titl != ""'>
+			AND TITL	LIKE	CONCAT('%', #{titl}, '%')
+		</if>
+		<if test='mngrMbrNm != null and mngrMbrNm != ""'>
+			AND	MNGR_MBR_IDX	IN	(
+										SELECT
+									  		MNGR_MBR_IDX
+										FROM
+									  		TBL_MNGR_MBR
+									  	WHERE
+									  		MNGR_MBR_NM = #{mngrMbrNm}
+									 )
+		</if>
+	</select>
+	
+	<insert id="insertNotice" parameterType="noticeDTO">
+		INSERT INTO
+				TBL_NTC(
+						MNGR_MBR_IDX,
+						MOD_MNGR_MBR_IDX,
+						TITL,
+						BODY,
+						USE_YN,
+						TOP_YN,
+						PC_YN,
+						MBL_YN
+						)
+		VALUES
+						(
+						#{mngrMbrIdx},		<!-- 등록관리자 인덱스	int(11) -->
+						#{modMngrMbrIdx},	<!-- 수정관리자 인덱스	int(11) -->
+						#{titl},			<!-- 제목	 		varchar(50) -->
+						#{body},			<!-- 내용	 		mediumtext -->
+						#{useYn},			<!-- 사용여부 		varchar(1)-->
+						#{topYn},			<!-- 상단노출여부 	varchar(1)-->
+						#{pcYn},			<!-- PC여부		varchar(1) -->
+						#{mblYn}			<!-- 모바일여부		varchar(1) -->
+						)
+	</insert>
+	
+	<select id="selectNoticeIdx" parameterType="noticeDTO" resultType="string">
+		SELECT
+			MAX(NTC_IDX)		ntcIdx			<!-- 공지 인덱스 -->
+		FROM
+			TBL_NTC
+		WHERE
+			MNGR_MBR_IDX = #{mngrMbrIdx}
+	</select>
+
+	<select id="selectNoticeInfo" parameterType="String" resultType="noticeMVO">
+		SELECT
+			NTC_IDX				ntcIdx,			<!-- 공지 인덱스 -->
+			MNGR_MBR_IDX		mngrMbrIdx,		<!-- 등록관리자 인덱스 -->
+			MOD_MNGR_MBR_IDX	modMngrMbrIdx,	<!-- 수정관리자 인덱스 -->
+			TITL				titl,			<!-- 제목 -->
+			BODY				body,			<!-- 내용 -->
+			HIT_CNT				hitCnt,			<!-- 조회수 -->
+			USE_YN				useYn,			<!-- 사용여부 -->
+			TOP_YN				topYn,			<!-- 상단노출여부 -->
+			PC_YN				pcYn,			<!-- PC여부 -->
+			MBL_YN				mblYn,			<!-- 모바일여부 -->
+			DEL_YN				delYn,			<!-- 삭제여부 -->
+			CRE_DTTM			creDttm,		<!-- 생성일시 -->
+			MOD_DTTM			modDttm			<!-- 수정일시 -->
+		FROM
+			TBL_NTC
+		WHERE
+			NTC_IDX = #{ntcIdx}
+	</select>
+	
+	<update id="updateNotice" parameterType="noticeDTO">
+		UPDATE
+			TBL_NTC
+		SET
+			MOD_MNGR_MBR_IDX	=	#{modMngrMbrIdx},	<!-- 수정관리자 인덱스	int(11) -->
+			TITL            	=	#{titl},			<!-- 제목	 		varchar(50) -->
+			BODY            	=	#{body},			<!-- 내용	 		mediumtext -->
+			USE_YN          	=	#{useYn},			<!-- 사용여부 		varchar(1)-->
+			TOP_YN          	=	#{topYn},			<!-- 상단노출여부 	varchar(1)-->
+			PC_YN           	=	#{pcYn},			<!-- PC여부		varchar(1) -->
+			MBL_YN          	=	#{mblYn}			<!-- 모바일여부		varchar(1) -->
+		WHERE
+			NTC_IDX				=	#{ntcIdx}			<!-- 공지 인덱스 -->
+	</update>
+	
+	<update id="deleteNotice" parameterType="noticeDTO">
+		UPDATE
+			TBL_NTC
+		SET
+			MOD_MNGR_MBR_IDX	=	#{modMngrMbrIdx},	<!-- 수정관리자 인덱스	int(11) -->
+			DEL_YN            	=	#{delYn}			<!-- 삭제여부 -->
+		WHERE
+			NTC_IDX				=	#{ntcIdx}			<!-- 공지 인덱스 -->
+	</update>
+</mapper>

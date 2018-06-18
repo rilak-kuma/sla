@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.maxerve.admin.activity.referenceRoomDAO">
+	
+	<select id="selectReferenceList" parameterType="reqReferenceVO" resultType="referenceMVO">
+		SELECT
+			A.REF_ROOM_IDX	refRoomIdx,		<!-- 자료실 인덱스	int(11) -->
+			A.MBR_IDX		mbrIdx,			<!-- 회원 인덱스	int(11) -->
+			(SELECT C.CTGR_NM FROM TBL_CTGR C WHERE C.CTGR_IDX = A.CTGR_IDX AND C.DEL_YN = 'N')		ctgrIdxNm,		<!-- 카테고리명	varchar(50) -->
+			A.YUTB_YN		yutbYn,			<!-- 유튜브여부		varchar(1) -->
+			A.TITL			titl,			<!-- 제목		varchar(50) -->
+			A.USE_YN 		useYn,			<!-- 전시(사용)여부	varchar(1) -->
+			A.CRE_DTTM		creDttm,		<!-- 생성일	datetime -->
+			B.CEO_NM 		ceoNm,			<!-- 등록자명(ceo명) -->
+      		B.OZTN_NM 		oztnNm			<!-- 단체명	-->
+		FROM
+			TBL_REF_ROOM A,
+     	 	TBL_MBR B
+		WHERE
+      		A.MBR_IDX = B.MBR_IDX
+		AND	A.DEL_YN = 'N'
+		AND DATE_FORMAT(A.CRE_DTTM, '%Y%m%d') BETWEEN REPLACE(#{creDttmOne}, '.', '') AND REPLACE(#{creDttmTwo}, '.', '')
+		<if test='ctgrIdx != null and ctgrIdx != ""'>
+			AND	A.CTGR_IDX	=	#{ctgrIdx}
+		</if>
+		<if test='titl != null and titl != ""'>
+			AND	A.TITL LIKE CONCAT('%', #{titl}, '%')
+		</if>
+		ORDER BY
+			<if test="sortType == 'sortOne_1'">
+				A.CRE_DTTM ASC,
+			</if>
+			<if test="sortType == 'sortOne_2'">
+				A.CRE_DTTM DESC,
+			</if>
+			<if test="sortType == 'sortTwo_1'">
+				A.USE_YN DESC,
+			</if>
+			<if test="sortType == 'sortTwo_2'">
+				A.USE_YN ASC,
+			</if>
+				A.REF_ROOM_IDX DESC
+		LIMIT ${pageInfo.firstRecordIndex}, ${pageInfo.recordCountPerPage}
+	</select>
+	
+	<select id="selectReferenceListCnt" parameterType="reqReferenceVO" resultType="int">
+		SELECT
+			COUNT(1) totalRecordCount
+		FROM
+			TBL_REF_ROOM
+		WHERE
+			DEL_YN = 'N'
+			AND DATE_FORMAT(CRE_DTTM, '%Y%m%d') BETWEEN REPLACE(#{creDttmOne}, '.', '') AND REPLACE(#{creDttmTwo}, '.', '')
+		<if test='ctgrIdx != null and ctgrIdx != ""'>
+			AND	CTGR_IDX	=	#{ctgrIdx}
+		</if>
+		<if test='titl != null and titl != ""'>
+			AND	TITL LIKE CONCAT('%', #{titl}, '%')
+		</if>
+	</select>
+	
+	<select id="selectReferenceListExcel" parameterType="reqReferenceVO" resultType="referenceMVO">
+		SELECT
+			A.REF_ROOM_IDX	refRoomIdx,		<!-- 자료실 인덱스	int(11) -->
+			A.MBR_IDX		mbrIdx,			<!-- 회원 인덱스	int(11) -->
+			(SELECT C.CTGR_NM FROM TBL_CTGR C WHERE C.CTGR_IDX = A.CTGR_IDX AND C.DEL_YN = 'N')		ctgrIdxNm,		<!-- 카테고리명	varchar(50) -->
+			A.YUTB_YN		yutbYn,			<!-- 유튜브여부		varchar(1) -->
+			A.TITL			titl,			<!-- 제목		varchar(50) -->
+			A.USE_YN 		useYn,			<!-- 전시(사용)여부	varchar(1) -->
+			A.CRE_DTTM		creDttm,		<!-- 생성일	datetime -->
+			B.CEO_NM 		ceoNm,			<!-- 등록자명(ceo명) -->
+      		B.OZTN_NM 		oztnNm			<!-- 단체명	-->
+		FROM
+			TBL_REF_ROOM A,
+     	 	TBL_MBR B
+		WHERE
+      		A.MBR_IDX = B.MBR_IDX
+		AND	A.DEL_YN = 'N'
+		AND DATE_FORMAT(A.CRE_DTTM, '%Y%m%d') BETWEEN REPLACE(#{creDttmOne}, '.', '') AND REPLACE(#{creDttmTwo}, '.', '')
+		<if test='ctgrIdx != null and ctgrIdx != ""'>
+			AND	A.CTGR_IDX	=	#{ctgrIdx}
+		</if>
+		<if test='titl != null and titl != ""'>
+			AND	A.TITL LIKE CONCAT('%', #{titl}, '%')
+		</if>
+		ORDER BY
+			<if test="sortType == 'sortOne_1'">
+				A.CRE_DTTM ASC,
+			</if>
+			<if test="sortType == 'sortOne_2'">
+				A.CRE_DTTM DESC,
+			</if>
+			<if test="sortType == 'sortTwo_1'">
+				A.USE_YN DESC,
+			</if>
+			<if test="sortType == 'sortTwo_2'">
+				A.USE_YN ASC,
+			</if>
+				A.REF_ROOM_IDX DESC
+	</select>
+	
+	<select id="selectCtgrRefCntList" parameterType="categoryDTO" resultType="referenceMVO">
+		SELECT
+			    A.CTGR_IDX 			ctgrIdx,
+			    A.CTGR_NM 			ctgrIdxNm,
+			    COALESCE(B.CNT,0) 	ctgrRefCnt
+		FROM
+			(
+			      SELECT
+			          CTGR_IDX,
+			          CTGR_NM
+			      FROM
+			          TBL_CTGR
+			      WHERE
+			          CTGR_TYP_CD = #{ctgrTypCd}
+			      AND DEL_YN = 'N'
+			) A
+		LEFT OUTER JOIN 
+		    (
+		      SELECT 
+		        COUNT(1) CNT,
+		        CTGR_IDX
+		      FROM
+		        TBL_REF_ROOM
+		      WHERE
+		      	DEL_YN = 'N'
+		      GROUP BY CTGR_IDX
+		     ) B
+		ON A.CTGR_IDX = B.CTGR_IDX
+	</select>
+
+	<select id="selectReferenceInfo" parameterType="reqReferenceVO" resultType="referenceMVO">
+		SELECT
+			A.REF_ROOM_IDX	refRoomIdx,		<!-- 자료실 인덱스	int(11) -->
+			A.MBR_IDX		mbrIdx,			<!-- 회원 인덱스	int(11) -->
+			A.MNGR_MBR_IDX	mngrMbrIdx,		<!-- 수정자 인덱스	int(11) -->
+			(SELECT
+				CTGR_NM
+			FROM
+				TBL_CTGR
+			WHERE
+				CTGR_TYP_CD = #{ctgrTypCd}
+			AND	CTGR_IDX = A.CTGR_IDX	)	ctgrIdxNm,		<!-- 카테고리명 -->
+			A.YUTB_YN		yutbYn,			<!-- 유튜브여부		varchar(1) -->
+			A.TITL			titl,			<!-- 제목		varchar(50) -->
+			A.BODY			body,			<!-- 내용		varchar(50) -->
+			A.HIT_CNT		hitCnt,			<!-- 조회수 -->
+			A.USE_YN 		useYn,			<!-- 전시(사용)여부	varchar(1) -->
+			A.DEL_YN		delYn,			<!-- 삭제여부	varchar(1) -->
+			A.CRE_DTTM		creDttm,		<!-- 생성일	datetime -->
+			A.MOD_DTTM		modDttm,		<!-- 수정일	datetime -->
+			B.CEO_NM 		ceoNm,			<!-- 등록자명(ceo명) -->
+      		B.OZTN_NM 		oztnNm			<!-- 단체명	-->
+		FROM
+			TBL_REF_ROOM A,
+     	 	TBL_MBR B
+		WHERE
+      		A.MBR_IDX = B.MBR_IDX
+		AND A.DEL_YN = 'N'
+		AND A.REF_ROOM_IDX	=	#{refRoomIdx}	<!-- 자료실 인덱스	int(11) -->
+	</select>
+	
+	<update id="updateReference" parameterType="referenceRoomDTO" >
+		UPDATE
+			TBL_REF_ROOM
+		SET
+	<if test='delYn != null and delYn != ""'>
+			DEL_YN			=	#{delYn}, 		<!-- 삭제여부	varchar(1) -->
+	</if>
+			MNGR_MBR_IDX	=	#{mngrMbrIdx},	<!-- 수정자 인덱스	int(11) -->
+			USE_YN			=	#{useYn}		<!-- 전시(사용)여부	varchar(1) -->
+		WHERE
+			REF_ROOM_IDX	=	#{refRoomIdx}	<!-- 자료실 인덱스	int(11) -->
+	</update>
+	
+</mapper>

@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.maxerve.admin.information.NewsletterDAO">
+
+	<!-- 뉴스레터 조회 목록 -->
+	<select id="selectNewsletterList" parameterType="reqNewsletterVO" resultType="newsLetterMVO">
+		SELECT
+			A.NEWS_LTTR_IDX,	<!-- 뉴스레터 인덱스 -->
+			A.NEWS_LTTR_NO,		<!-- 뉴스레터 호 -->
+			A.HIT_CNT,			<!-- 조회수 -->
+			A.TITL,				<!-- 제목 -->
+			A.USE_YN,			<!-- 사용여부 -->
+			A.CRE_DTTM,			<!-- 생성일시 -->
+			B.MNGR_MBR_NM		<!-- 등록자 -->
+		FROM
+			TBL_NEWS_LTTR A,
+     	 	TBL_MNGR_MBR B
+		WHERE
+      		A.MNGR_MBR_IDX = B.MNGR_MBR_IDX
+		AND A.DEL_YN != 'Y'
+		AND DATE_FORMAT(A.CRE_DTTM, '%Y%m%d') BETWEEN REPLACE(#{creDttmOne}, '.', '') AND REPLACE(#{creDttmTwo}, '.', '')
+		<if test='useYn != null and useYn != ""'>
+			AND	A.USE_YN	=	#{useYn}
+		</if>
+		<if test='titl != null and titl != ""'>
+			AND A.TITL	LIKE	CONCAT('%', #{titl}, '%')
+		</if>
+		ORDER BY
+			<if test="sortType == 'sortOne_1'">
+				A.CRE_DTTM ASC,
+			</if>
+			<if test="sortType == 'sortOne_2'">
+				A.CRE_DTTM DESC,
+			</if>
+			<if test="sortType == 'sortTwo_1'">
+				A.USE_YN ASC,
+			</if>
+			<if test="sortType == 'sortTwo_2'">
+				A.USE_YN DESC,
+			</if>
+				CAST(A.NEWS_LTTR_NO AS UNSIGNED) DESC
+		LIMIT ${pageInfo.firstRecordIndex}, ${pageInfo.recordCountPerPage}
+	</select>
+
+	<!-- 뉴스레터 조회 목록 수 -->
+	<select id="selectNewsletterListCnt" parameterType="reqNewsletterVO" resultType="int">
+		SELECT
+			COUNT(1) totalRecordCount
+		FROM
+			TBL_NEWS_LTTR
+		WHERE
+			DEL_YN != 'Y'
+		AND DATE_FORMAT(CRE_DTTM, '%Y%m%d') BETWEEN REPLACE(#{creDttmOne}, '.', '') AND REPLACE(#{creDttmTwo}, '.', '')
+		<if test='useYn != null and useYn != ""'>
+			AND	USE_YN	=	#{useYn}
+		</if>
+		<if test='titl != null and titl != ""'>
+			AND TITL	LIKE	CONCAT('%', #{titl}, '%')
+		</if>
+	</select>
+
+	<!-- 뉴스레터 상세 -->
+	<select id="selectNewsletterInfo" parameterType="String" resultType="newsletterDTO">
+		SELECT
+			NEWS_LTTR_IDX,	<!-- 뉴스레터 인덱스 -->
+			NEWS_LTTR_NO,	<!-- 뉴스레터 호 -->
+			HIT_CNT,		<!-- 조회수 -->
+			MBL_YN,			<!-- 모바일여부 -->
+			PC_YN,			<!-- PC여부 -->
+			TITL,			<!-- 제목 -->
+			SUB_TITL3,		<!-- 소제목3 -->
+			SUB_TITL2,		<!-- 소제목2 -->
+			SUB_TITL1,		<!-- 소제목1 -->
+			BODY,			<!-- 내용 -->
+			USE_YN,			<!-- 사용여부 -->
+			DEL_YN,			<!-- 삭제여부 -->
+			CRE_DTTM,		<!-- 생성일시 -->
+			MNGR_MBR_IDX,	<!-- 등록자 -->
+			MOD_DTTM,		<!-- 수정일시 -->
+			MOD_MBR_IDX		<!-- 수정자 -->
+		FROM
+			TBL_NEWS_LTTR
+		WHERE
+			NEWS_LTTR_IDX = #{newsLttrIdx}
+	</select>
+
+	<!-- 뉴스레터 등록 & 수정 -->
+	<insert id="insertNewsletter" parameterType="newsletterDTO">
+		INSERT INTO
+			TBL_NEWS_LTTR
+				(
+				<if test='newsLttrIdx != null and newsLttrIdx != ""'>
+					NEWS_LTTR_IDX,	<!-- int(11) NOT NULL AUTO_INCREMENT COMMENT '뉴스레터 인덱스' -->
+				</if>
+					NEWS_LTTR_NO,	<!-- varchar(50) NOT NULL COMMENT '뉴스레터 호' -->
+					MNGR_MBR_IDX, 	<!-- int(11) NOT NULL COMMENT '등록자' -->
+					MOD_MBR_IDX, 	<!-- int(11) NOT NULL DEFAULT '0' COMMENT '수정자' -->
+					TITL, 			<!-- varchar(50) NOT NULL COMMENT '제목' -->
+					SUB_TITL1, 		<!-- varchar(50) NOT NULL COMMENT '소제목1' -->
+					SUB_TITL2, 		<!-- varchar(50) NOT NULL COMMENT '소제목2' -->
+					SUB_TITL3, 		<!-- varchar(50) NOT NULL COMMENT '소제목3' -->
+					BODY, 			<!-- mediumtext NOT NULL COMMENT '내용' -->
+					PC_YN, 			<!-- varchar(1) NOT NULL COMMENT 'PC여부' -->
+					MBL_YN, 		<!-- varchar(1) NOT NULL COMMENT '모바일여부' -->
+					HIT_CNT, 		<!-- int(11) NOT NULL DEFAULT '0' COMMENT '조회수' -->
+					USE_YN, 		<!-- varchar(1) NOT NULL COMMENT '사용여부' -->
+					DEL_YN 			<!-- varchar(1) NOT NULL DEFAULT 'N' COMMENT '삭제여부' -->
+				)
+		VALUES
+				(
+				<if test='newsLttrIdx != null and newsLttrIdx != ""'>
+					#{newsLttrIdx},	<!-- int(11) NOT NULL AUTO_INCREMENT COMMENT '뉴스레터 인덱스' -->
+				</if>
+					#{newsLttrNo},	<!-- varchar(50) NOT NULL COMMENT '뉴스레터 호' -->
+					#{mngrMbrIdx}, 	<!-- int(11) NOT NULL COMMENT '등록자' -->
+					#{modMbrIdx}, 	<!-- int(11) NOT NULL DEFAULT '0' COMMENT '수정자' -->
+					#{titl}, 		<!-- varchar(50) NOT NULL COMMENT '제목' -->
+					#{subTitl1}, 	<!-- varchar(50) NOT NULL COMMENT '소제목1' -->
+					#{subTitl2}, 	<!-- varchar(50) NOT NULL COMMENT '소제목2' -->
+					#{subTitl3}, 	<!-- varchar(50) NOT NULL COMMENT '소제목3' -->
+					#{body}, 		<!-- mediumtext NOT NULL COMMENT '내용' -->
+					#{pcYn}, 		<!-- varchar(1) NOT NULL COMMENT 'PC여부' -->
+					#{mblYn}, 		<!-- varchar(1) NOT NULL COMMENT '모바일여부' -->
+					0, 				<!-- int(11) NOT NULL DEFAULT '0' COMMENT '조회수' -->
+					#{useYn}, 		<!-- varchar(1) NOT NULL COMMENT '사용여부' -->
+					'N' 			<!-- varchar(1) NOT NULL DEFAULT 'N' COMMENT '삭제여부' -->
+				)
+		ON DUPLICATE KEY UPDATE
+				NEWS_LTTR_NO	=	#{newsLttrNo},	<!-- varchar(50) NOT NULL COMMENT '뉴스레터 호' -->
+				MOD_MBR_IDX     =	#{modMbrIdx}, 	<!-- int(11) NOT NULL DEFAULT '0' COMMENT '수정자' -->
+				TITL            =	#{titl}, 		<!-- varchar(50) NOT NULL COMMENT '제목' -->
+				SUB_TITL1       =	#{subTitl1}, 	<!-- varchar(50) NOT NULL COMMENT '소제목1' -->
+				SUB_TITL2       =	#{subTitl2}, 	<!-- varchar(50) NOT NULL COMMENT '소제목2' -->
+				SUB_TITL3       =	#{subTitl3}, 	<!-- varchar(50) NOT NULL COMMENT '소제목3' -->
+				BODY            =	#{body}, 		<!-- mediumtext NOT NULL COMMENT '내용' -->
+				PC_YN           =	#{pcYn}, 		<!-- varchar(1) NOT NULL COMMENT 'PC여부' -->
+				MBL_YN          =	#{mblYn}, 		<!-- varchar(1) NOT NULL COMMENT '모바일여부' -->
+				USE_YN          =	#{useYn} 		<!-- varchar(1) NOT NULL COMMENT '사용여부' -->
+	</insert>
+
+	<!-- 뉴스레터 삭제 -->
+	<update id="deleteNewsLetter" parameterType="newsletterDTO">
+		UPDATE
+			TBL_NEWS_LTTR
+		SET
+			DEL_YN		=	#{delYn},		<!-- varchar(1) NOT NULL DEFAULT 'N' COMMENT '삭제여부' -->
+			MOD_MBR_IDX	=	#{modMbrIdx}, 	<!-- int(11) NOT NULL DEFAULT '0' COMMENT '수정자' -->
+		WHERE
+			NEWS_LTTR_IDX = #{newsLttrIdx}
+	</update>
+
+	<!-- 뉴스레터 구독자 목록 -->
+	<select id="selectSubscriberList" parameterType="reqSubscriberVO" resultType="subscriberMVO">
+		SELECT
+			SCB_NM,		<!-- 구독자명 -->
+			FNC_CMMN_CD_NM(SCB_LOC_CD) scbLocCdNm,	<!-- 구독신청경로 공통코드(032) -->
+			EMIL,		<!-- 이메일 -->
+			CRE_DTTM	<!-- 생성일시 -->
+		FROM
+			TBL_NEWS_LTTR_SCB
+		WHERE
+			DATE_FORMAT(CRE_DTTM, '%Y%m%d') BETWEEN REPLACE(#{creDttmOne}, '.', '') AND REPLACE(#{creDttmTwo}, '.', '')
+		<if test='scbNm != null and scbNm != ""'>
+		AND SCB_NM	LIKE	CONCAT('%', #{scbNm}, '%')
+		</if>
+		<if test='emil != null and emil != ""'>
+		AND EMIL	LIKE	CONCAT('%', #{emil}, '%')
+		</if>
+		<if test='scbLocCd != null and scbLocCd != ""'>
+		AND SCB_LOC_CD	= #{scbLocCd}
+		</if>
+		ORDER BY
+			<if test="sortType == 'sortOne_1'">
+				 	CRE_DTTM ASC,
+			</if>
+			<if test="sortType == 'sortOne_2'">
+					CRE_DTTM DESC,
+			</if>
+			<if test="sortType == 'sortTwo_1'">
+					SCB_LOC_CD ASC,
+			</if>
+			<if test="sortType == 'sortTwo_2'">
+					SCB_LOC_CD DESC,
+			</if>
+					SCB_NM ASC
+		LIMIT ${pageInfo.firstRecordIndex}, ${pageInfo.recordCountPerPage}
+	</select>
+
+	<!-- 뉴스레터 구독자 목록 수 -->
+	<select id="selectSubscriberListCnt" parameterType="reqSubscriberVO" resultType="int">
+		SELECT
+			COUNT(1) totalRecordCount
+		FROM
+			TBL_NEWS_LTTR_SCB
+		WHERE
+			DATE_FORMAT(CRE_DTTM, '%Y%m%d') BETWEEN REPLACE(#{creDttmOne}, '.', '') AND REPLACE(#{creDttmTwo}, '.', '')
+		<if test='scbNm != null and scbNm != ""'>
+		AND SCB_NM	LIKE	CONCAT('%', #{scbNm}, '%')
+		</if>
+		<if test='emil != null and emil != ""'>
+		AND EMIL	LIKE	CONCAT('%', #{emil}, '%')
+		</if>
+		<if test='scbLocCd != null and scbLocCd != ""'>
+		AND SCB_LOC_CD	= #{scbLocCd}
+		</if>
+	</select>
+
+	<!-- 뉴스레터 구독자 목록 엑셀다운로드 -->
+	<select id="selectSubscriberListExcel" parameterType="reqSubscriberVO" resultType="subscriberMVO">
+		SELECT
+			SCB_NM,		<!-- 구독자명 -->
+			FNC_CMMN_CD_NM(SCB_LOC_CD) scbLocCdNm,	<!-- 구독신청경로 공통코드(032) -->
+			EMIL,		<!-- 이메일 -->
+			CRE_DTTM	<!-- 생성일시 -->
+		FROM
+			TBL_NEWS_LTTR_SCB
+		WHERE
+			DATE_FORMAT(CRE_DTTM, '%Y%m%d') BETWEEN REPLACE(#{creDttmOne}, '.', '') AND REPLACE(#{creDttmTwo}, '.', '')
+		<if test='scbNm != null and scbNm != ""'>
+		AND SCB_NM	LIKE	CONCAT('%', #{scbNm}, '%')
+		</if>
+		<if test='emil != null and emil != ""'>
+		AND EMIL	LIKE	CONCAT('%', #{emil}, '%')
+		</if>
+		<if test='scbLocCd != null and scbLocCd != ""'>
+		AND SCB_LOC_CD	= #{scbLocCd}
+		</if>
+		ORDER BY
+			<if test="sortType == 'sortOne_1'">
+					CRE_DTTM ASC,
+			</if>
+			<if test="sortType == 'sortOne_2'">
+					CRE_DTTM DESC,
+			</if>
+			<if test="sortType == 'sortTwo_1'">
+					SCB_LOC_CD DESC,
+			</if>
+			<if test="sortType == 'sortTwo_2'">
+					SCB_LOC_CD ASC,
+			</if>
+					SCB_NM ASC
+	</select>
+
+	<!-- 뉴스레터 신청경로별 구독자 수 -->
+	<select id="selectSCBCnt" resultType="subscriberMVO">
+		SELECT
+		  COUNT(korSubscribCnt) korSubscribCnt,
+		  COUNT(engSubscribCnt) engSubscribCnt
+		FROM(
+				SELECT
+					case SCB_LOC_CD when '032001' then 1 end korSubscribCnt,
+		      		case SCB_LOC_CD when '032002' then 1 end engSubscribCnt
+				FROM
+					TBL_NEWS_LTTR_SCB
+		    ) Z
+	</select>
+
+</mapper>

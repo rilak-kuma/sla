@@ -1,0 +1,927 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.maxerve.admin.facilities.facilitiesDAO">
+<resultMap type="makerspaceClassMVO" id="makerspaceClassInfoMap">
+	<id column="MKSP_CLS_IDX" property="mkspClsIdx"/>
+	<result column="TITL" property="titl"/>
+	<result column="SRT_DT" property="srtDt"/>
+	<result column="END_DT" property="endDt"/>
+	<result column="OPR_TM_INFO" property="oprTmInfo"/>
+	<result column="RSVT_MBR_INFO" property="rsvtMbrInfo"/>
+	<result column="RCRT_PSCT_INFO" property="rcrtPsctInfo"/>
+	<result column="PRC_INFO" property="prcInfo"/>
+	<result column="USE_YN" property="useYn"/>
+	<collection property="groupList" ofType="makerspaceClassGroupDTO" javaType="list">
+		<id column="MKSP_CLS_GRP_IDX" property="mkspClsGrpIdx"/>
+		<result column="MKSP_CLS_IDX" property="mkspClsIdx" />
+		<result column="SRT_TM" property="srtTm"/>
+		<result column="END_TM" property="endTm"/>
+		<result column="GRP_NM" property="grpNm"/>
+		<result column="GRP_ORD" property="grpOrd"/>
+		<result column="PRC" property="prc"/>
+		<result column="PSCT" property="psct"/>
+		<result column="FORM_URL" property="formUrl"/>
+	</collection>
+</resultMap>
+
+<!-- 시설목록 -->
+<select id="selectFacilitiesList" parameterType="facilitiesMasterDTO" resultType="facilitiesMasterDTO">
+	SELECT
+		FCT_MST_IDX,
+		RSVT_PLC_CD,
+		FCT_NM,
+		ORD,
+		MIN_TM,
+		RSVT_UNIT,
+		DFT_PRC,
+		ADD_PRC,
+		USE_SRT_DT,
+		USE_END_DT,
+		OPR_TM_INFO,
+		RSVT_MBR_INFO,
+		PSBL_MIN_PSCT,
+		PSBL_MAX_PSCT,
+		FCT_FOA,
+		TNM,
+		MAX_OTP_SIZE,
+		PRC_INFO,
+		USE_YN,
+		CRE_DTTM,
+		MOD_DTTM
+	FROM
+		TBL_FCT_MST
+	WHERE
+		DEL_YN != 'Y'
+	<if test="rsvtPlcCd != null and !rsvtPlcCd.equals('')">
+	AND RSVT_PLC_CD = #{rsvtPlcCd}
+	<if test='rsvtPlcCd == "002001"' >
+		<if test='fctNm == "모두모임방"'>
+			AND FCT_NM LIKE CONCAT(#{fctNm},'%')
+		</if>
+		<if test='fctNm == "" and fctNm == null'>
+			AND FCT_NM NOT LIKE '모두모임방%'
+		</if>
+	</if>
+	</if>
+	<if test="useYn != null and !useYn.equals('')">
+	AND USE_YN = #{useYn}
+	</if>
+	<if test="rtaYn != null and !rtaYn.equals('')">
+	AND RTA_YN = #{rtaYn}
+	</if>
+	ORDER BY
+		RSVT_PLC_CD, ORD
+
+</select>
+
+<!-- 시설수 -->
+<select id="selectCount" parameterType="reqFacilitiesMasterVO" resultType="int">
+	SELECT
+		COUNT(*)
+	FROM
+		TBL_FCT_MST
+	WHERE
+		DEL_YN != 'Y'
+	AND RSVT_PLC_CD = #{rsvtPlcCd}
+</select>
+
+<!-- 시설목록 확정형 -->
+<select id="selectExtraList" parameterType="reqFacilitiesMasterVO" resultType="facilitiesMasterDTO">
+	SELECT
+		FCT_MST_IDX		fctMstIdx		,	<!-- INT(11) NOT NULL AUTO_INCREMENT COMMENT '시설 인덱스', -->
+		RSVT_PLC_CD		rsvtPlcCd		,	<!-- VARCHAR(50) NOT NULL COMMENT '예약장소 공통코드(002)', -->
+		FCT_NM			fctNm			,	<!-- VARCHAR(50) NOT NULL COMMENT '시설명', -->
+		ORD				ord				,	<!-- INT(11) NOT NULL COMMENT '순번', -->
+		MIN_TM			minTm			,	<!-- TINYINT(4) NOT NULL DEFAULT '0' COMMENT '최소예약시간(분)', -->
+		RSVT_UNIT		rsvtUnit		,	<!-- TINYINT(4) NOT NULL DEFAULT '0' COMMENT '예약단위(분)', -->
+		DFT_PRC			dftPrc			,	<!-- INT(11) NOT NULL COMMENT '기본사용료', -->
+		ADD_PRC			addPrc			,	<!-- INT(11) NOT NULL COMMENT '추가사용료', -->
+		USE_SRT_DT		useSrtDt		,	<!-- VARCHAR(10) NOT NULL COMMENT '적용시작일', -->
+		USE_END_DT		useEndDt		,	<!-- VARCHAR(10) NOT NULL COMMENT '적용종료일', -->
+		OPR_TM_INFO		oprTmInfo		,	<!-- VARCHAR(50) NOT NULL COMMENT '운영시간정보', -->
+		RSVT_MBR_INFO	rsvtMbrInfo	,	<!-- VARCHAR(50) NOT NULL COMMENT '예약가능회원정보', -->
+		PSBL_MIN_PSCT	psblMinPsct	,	<!-- TINYINT(4) NOT NULL DEFAULT '0' COMMENT '사용가능최소인원', -->
+		PSBL_MAX_PSCT	psblMaxPsct	,	<!-- TINYINT(4) NOT NULL DEFAULT '0' COMMENT '사용가능최대인원', -->
+		FCT_FOA			fctFoa			,	<!-- TINYINT(4) NOT NULL DEFAULT '0' COMMENT '면적', -->
+		TNM				tnm				,	<!-- VARCHAR(50) NOT NULL COMMENT '기자재', -->
+		MAX_OTP_SIZE	maxOtpSize	,	<!-- VARCHAR(50) NOT NULL COMMENT '최대출력사이즈', -->
+		PRC_INFO		prcInfo		,	<!-- VARCHAR(50) NOT NULL COMMENT '사용료정보', -->
+		USE_YN			useYn			,	<!-- VARCHAR(1) NOT NULL DEFAULT 'N' COMMENT '사용여부', -->
+		DEL_YN			delYn			,	<!-- VARCHAR(1) NOT NULL DEFAULT 'N' COMMENT '삭제여부', -->
+		CRE_DTTM		creDttm		,	<!-- DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성일시', -->
+		MOD_DTTM		modDttm			<!-- DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일시', -->
+	FROM
+		TBL_FCT_MST
+	WHERE
+		DEL_YN != 'Y'
+	AND RSVT_PLC_CD = #{rsvtPlcCd}
+	ORDER BY
+	<if test="sortType != null and sortType.equals('1')">
+		CRE_DTTM ASC,
+	</if>
+	<if test="sortType != null and sortType.equals('2')">
+		CRE_DTTM DESC,
+	</if>
+	<if test="sortType != null and sortType.equals('3')">
+		USE_YN ASC,
+	</if>
+	<if test="sortType != null and sortType.equals('4')">
+		USE_YN DESC,
+	</if>
+		FCT_MST_IDX DESC
+	LIMIT
+		#{pageInfo.firstRecordIndex}, #{pageInfo.recordCountPerPage}
+</select>
+
+<!-- 시설정보 -->
+<select id="selectInfo" parameterType="string" resultType="facilitiesMasterDTO">
+	SELECT
+		*
+	FROM
+		TBL_FCT_MST
+	WHERE
+		FCT_MST_IDX = #{value}
+</select>
+
+<!-- 시설 시간목록 -->
+<select id="selectTimeList" parameterType="string" resultType="facilitiesScheduleDTO">
+	SELECT
+		SRT_TM srtTm,
+		END_TM endTm
+	FROM
+		TBL_FCT_SCH
+	WHERE
+		FCT_MST_IDX = #{value}
+	GROUP BY
+		SRT_TM, END_TM
+	ORDER BY
+		SRT_TM, END_TM
+</select>
+
+<!-- 시설정보등록 -->
+<insert id="insert" parameterType="reqFacilitiesMasterIVO" useGeneratedKeys="true" keyProperty="fctMstIdx">
+	INSERT INTO /** kr.maxerve.admin.facilities.facilitiesDAO.insert */
+		TBL_FCT_MST
+	(
+		FCT_MST_IDX,		<!-- INT(11) NOT NULL AUTO_INCREMENT COMMENT '시설 인덱스', -->
+		RSVT_PLC_CD,		<!-- VARCHAR(50) NOT NULL COMMENT '예약장소 공통코드(002)', -->
+		FCT_NM,				<!-- VARCHAR(50) NOT NULL COMMENT '시설명', -->
+		ORD,				<!-- INT(11) NOT NULL COMMENT '순번', -->
+		MIN_TM,				<!-- TINYINT(4) NOT NULL DEFAULT '0' COMMENT '최소예약시간(분)', -->
+		RSVT_UNIT,			<!-- TINYINT(4) NOT NULL DEFAULT '0' COMMENT '예약단위(분)', -->
+		DFT_PRC,			<!-- INT(11) NOT NULL COMMENT '기본사용료', -->
+		ADD_PRC,			<!-- INT(11) NOT NULL COMMENT '추가사용료', -->
+		USE_SRT_DT,			<!-- VARCHAR(10) NOT NULL COMMENT '적용시작일', -->
+		USE_END_DT,			<!-- VARCHAR(10) NOT NULL COMMENT '적용종료일', -->
+		OPR_TM_INFO,		<!-- VARCHAR(50) NOT NULL COMMENT '운영시간정보', -->
+		RSVT_MBR_INFO,		<!-- VARCHAR(50) NOT NULL COMMENT '예약가능회원정보', -->
+		PSBL_MIN_PSCT,		<!-- TINYINT(4) NOT NULL DEFAULT '0' COMMENT '사용가능최소인원', -->
+		PSBL_MAX_PSCT,		<!-- TINYINT(4) NOT NULL DEFAULT '0' COMMENT '사용가능최대인원', -->
+		FCT_FOA,			<!-- TINYINT(4) NOT NULL DEFAULT '0' COMMENT '면적', -->
+		TNM,				<!-- VARCHAR(50) NOT NULL COMMENT '기자재', -->
+		MAX_OTP_SIZE,		<!-- VARCHAR(50) NOT NULL COMMENT '최대출력사이즈', -->
+		PRC_INFO,			<!-- VARCHAR(50) NOT NULL COMMENT '사용료정보', -->
+		MNGR_NM,			<!-- VARCHAR(50) NOT NULL COMMENT '담당자명', -->
+		RMK,				<!-- VARCHAR(1000) NOT NULL COMMENT '특이사항', -->
+		USE_YN				<!-- VARCHAR(1) NOT NULL DEFAULT 'N' COMMENT '사용여부', -->
+	) VALUES (
+	<if test="fctMstIdx == null or fctMstIdx.equals('')">
+		null,
+	</if>
+	<if test="fctMstIdx != null and !fctMstIdx.equals('')">
+		#{fctMstIdx},
+	</if>
+		#{rsvtPlcCd},
+		#{fctNm},
+	<if test="ord == null or ord.equals('')">
+		0,
+	</if>
+	<if test="ord != null and !ord.equals('')">
+		#{ord},
+	</if>
+		#{minTm},
+		#{rsvtUnit},
+		#{dftPrc},
+		#{addPrc},
+		#{useSrtDt},
+		#{useEndDt},
+		#{oprTmInfo},
+		#{rsvtMbrInfo},
+		#{psblMinPsct},
+		#{psblMaxPsct},
+		#{fctFoa},
+		#{tnm},
+		#{maxOtpSize},
+		#{prcInfo},
+		#{mngrNm},
+		#{rmk},
+		#{useYn}
+	)
+	ON DUPLICATE KEY UPDATE
+		FCT_NM = #{fctNm},
+		MIN_TM = #{minTm},
+		RSVT_UNIT = #{rsvtUnit},
+		DFT_PRC = #{dftPrc},
+		ADD_PRC = #{addPrc},
+		USE_SRT_DT = #{useSrtDt},
+		USE_END_DT = #{useEndDt},
+		OPR_TM_INFO = #{oprTmInfo},
+		RSVT_MBR_INFO = #{rsvtMbrInfo},
+		PSBL_MIN_PSCT = #{psblMinPsct},
+		PSBL_MAX_PSCT = #{psblMaxPsct},
+		FCT_FOA = #{fctFoa},
+		TNM = #{tnm},
+		MAX_OTP_SIZE = #{maxOtpSize},
+		PRC_INFO = #{prcInfo},
+		MNGR_NM = #{mngrNm},
+		RMK = #{rmk},
+		USE_YN = #{useYn}
+</insert>
+
+<!-- 시설스케쥴정리 -->
+<delete id="clearSchedule" parameterType="string">
+	DELETE
+	FROM
+		TBL_FCT_SCH
+	WHERE
+		FCT_MST_IDX = #{fctMstIdx}
+</delete>
+
+<!-- 시설스케쥴등록 -->
+<insert id="insertSchedule" parameterType="facilitiesScheduleDTO">
+	INSERT INTO
+		TBL_FCT_SCH
+	(
+		FCT_MST_IDX,		<!-- INT(11) NOT NULL COMMENT '시설 인덱스', -->
+		FCT_DOW,			<!-- TINYINT(4) NOT NULL COMMENT '요일(공휴일 0)', -->
+		SRT_TM,			<!-- VARCHAR(5) NOT NULL COMMENT '시작시분', -->
+		END_TM			<!-- VARCHAR(5) NOT NULL COMMENT '종료시분', -->
+	) VALUES (
+		#{fctMstIdx},
+		#{fctDow},
+		#{srtTm},
+		#{endTm}
+	)
+</insert>
+
+<!-- 일정목록 -->
+<select id="selectScheduleList" parameterType="string" resultType="facilitiesScheduleDTO">
+	SELECT
+		FCT_MST_IDX,
+		SRT_TM,
+		END_TM,
+		FCT_DOW
+	FROM
+		TBL_FCT_SCH
+	WHERE
+		FCT_MST_IDX = #{fctMstIdx}
+	ORDER BY
+		SRT_TM,
+		END_TM,
+		FCT_DOW
+</select>
+
+<!-- 메이커스페이스 클래스 총수 -->
+<select id="selectMakerspaceClassCount" resultType="int">
+	SELECT
+		COUNT(*)
+	FROM
+		TBL_MKSP_CLS
+	WHERE
+		DEL_YN != 'Y'
+</select>
+
+<!-- 메이커스페이스 클래스 목록 -->
+<select id="selectMakerspaceClassList" parameterType="reqMakerspaceClassVO" resultType="makerspaceClassDTO">
+	SELECT
+		MKSP_CLS_IDX	mkspClsIdx	,
+		TITL titl,
+		SRT_DT	srtDt	,
+		END_DT	endDt	,
+		OPR_TM_INFO	oprTmInfo	,
+		RSVT_MBR_INFO	rsvtMbrInfo	,
+		RCRT_PSCT_INFO	rcrtPsctInfo	,
+		PRC_INFO	prcInfo	,
+		USE_YN	useYn	,
+		DEL_YN	delYn	,
+		CRE_DTTM	creDttm
+	FROM
+		TBL_MKSP_CLS
+	WHERE
+		DEL_YN != 'Y'
+	ORDER BY
+	<if test="sortType != null and sortType.equals('1')">
+		CRE_DTTM ASC,
+	</if>
+	<if test="sortType != null and sortType.equals('2')">
+		CRE_DTTM DESC,
+	</if>
+	<if test="sortType != null and sortType.equals('3')">
+		USE_YN ASC,
+	</if>
+	<if test="sortType != null and sortType.equals('4')">
+		USE_YN DESC,
+	</if>
+		MKSP_CLS_IDX DESC
+	LIMIT
+		#{pageInfo.firstRecordIndex}, #{pageInfo.recordCountPerPage}
+</select>
+
+<!-- 메이커스페이스 클래스 등록 -->
+<insert id="insertMakerspaceClass" parameterType="makerspaceClassDTO" useGeneratedKeys="true" keyProperty="mkspClsIdx">
+	INSERT INTO
+		TBL_MKSP_CLS
+	(
+		MKSP_CLS_IDX,			<!-- INT(11) NOT NULL AUTO_INCREMENT COMMENT '메이커스페이스 클래스 인덱스', -->
+		TITL,					<!-- VARCHAR(50) NOT NULL COMMENT '제목', -->
+		SRT_DT,					<!-- VARCHAR(10) NOT NULL COMMENT '모집시작기간', -->
+		END_DT,					<!-- VARCHAR(10) NOT NULL COMMENT '모집종료기간', -->
+		OPR_TM_INFO,			<!-- VARCHAR(50) NOT NULL COMMENT '운영시간정보', -->
+		RSVT_MBR_INFO,			<!-- VARCHAR(50) NOT NULL COMMENT '예약가능회원정보', -->
+		RCRT_PSCT_INFO,			<!-- VARCHAR(50) NOT NULL COMMENT '모집정원정보', -->
+		PRC_INFO,				<!-- VARCHAR(50) NOT NULL COMMENT '사용료정보', -->
+		USE_YN					<!-- VARCHAR(1) NOT NULL COMMENT '사용여부', -->
+	) VALUES (
+	<if test="mkspClsIdx == null or mkspClsIdx.equals('')">
+		null,
+	</if>
+	<if test="mkspClsIdx != null and !mkspClsIdx.equals('')">
+		#{mkspClsIdx},
+	</if>
+		#{titl},
+		#{srtDt},
+		#{endDt},
+		#{oprTmInfo},
+		#{rsvtMbrInfo},
+		#{rcrtPsctInfo},
+		#{prcInfo},
+		#{useYn}
+	)
+	ON DUPLICATE KEY UPDATE
+		TITL = #{titl},
+		SRT_DT =			#{srtDt},
+		END_DT =			#{endDt},
+		OPR_TM_INFO =	#{oprTmInfo},
+		RSVT_MBR_INFO =	#{rsvtMbrInfo},
+		RCRT_PSCT_INFO =	#{rcrtPsctInfo},
+		PRC_INFO =		#{prcInfo},
+		USE_YN	=		#{useYn}
+</insert>
+
+<!-- 메이커스페이스 커리큘럼 삭제 -->
+<delete id="deleteMakerspaceClassCurriculum" parameterType="string">
+	DELETE
+	FROM
+		TBL_MKSP_CLS_CRCL
+	WHERE
+		MKSP_CLS_IDX = #{value}
+</delete>
+
+<!-- 메이커스페이스 커리큘럼 등록 -->
+<insert id="insertMakerspaceClassCurriculum" parameterType="makerspaceClassCurriculumDTO">
+	INSERT INTO
+		TBL_MKSP_CLS_CRCL
+	(
+		MKSP_CLS_IDX,		<!-- INT(11) NOT NULL COMMENT '메이커스페이스 클래스 인덱스', -->
+		GRP_ORD,			<!-- INT(11) NOT NULL COMMENT '반 순번', -->
+		CRCL_DT,			<!-- VARCHAR(10) NOT NULL COMMENT '교육일자', -->
+		CRCL_NM			<!-- VARCHAR(50) NOT NULL COMMENT '교육명', -->
+	) VALUES (
+		#{mkspClsIdx},
+		#{grpOrd},
+		#{crclDt},
+		#{crclNm}
+	)
+</insert>
+
+<!-- 메이커스페이스 클래스 그룹등록 -->
+<insert id="insertMakerspaceClassGroup" parameterType="makerspaceClassGroupDTO">
+	INSERT INTO
+		TBL_MKSP_CLS_GRP
+	(
+		MKSP_CLS_GRP_IDX,		<!-- INT(11) NOT NULL AUTO_INCREMENT COMMENT '메이커스페이스 클래스 그룹 인덱스', -->
+		MKSP_CLS_IDX,			<!-- INT(11) NOT NULL COMMENT '메이커스페이스 클래스 인덱스', -->
+		SRT_TM,					<!-- VARCHAR(5) NOT NULL COMMENT '시작시분', -->
+		END_TM,					<!-- VARCHAR(5) NOT NULL COMMENT '종료시분', -->
+		GRP_NM,					<!-- VARCHAR(50) NOT NULL COMMENT '그룹명', -->
+		GRP_ORD,				<!-- INT(11) NOT NULL COMMENT '반순번(종합반은 0)', -->
+		PRC,					<!-- VARCHAR(10) NOT NULL COMMENT '가격', -->
+		PSCT,					<!-- VARCHAR(10) NOT NULL COMMENT '인원', -->
+		FORM_URL				<!-- VARCHAR(200) NOT NULL COMMENT '신청서 URL', -->
+	) VALUES (
+	<if test="mkspClsGrpIdx == null or mkspClsGrpIdx.equals('')">
+		null,
+	</if>
+	<if test="mkspClsGrpIdx != null and !mkspClsGrpIdx.equals('')">
+		#{mkspClsGrpIdx},
+	</if>
+		${mkspClsIdx},
+		#{srtTm},
+		#{endTm},
+		#{grpNm},
+		#{grpOrd},
+		#{prc},
+		#{psct},
+		#{formUrl}
+	)
+	ON DUPLICATE KEY UPDATE
+		SRT_TM = #{srtTm},
+		END_TM = #{endTm},
+		GRP_NM = #{grpNm},
+		GRP_ORD = #{grpOrd},
+		PRC = #{prc},
+		PSCT = #{psct},
+		FORM_URL = #{formUrl}
+</insert>
+
+<!-- 메이커스페이스 클래스 정보 -->
+<select id="selectMakerspaceClassInfo" parameterType="string" resultMap="makerspaceClassInfoMap">
+	SELECT
+		TB1.MKSP_CLS_IDX,
+		TB1.TITL,
+		TB1.SRT_DT,
+		TB1.END_DT,
+		TB1.OPR_TM_INFO,
+		TB1.RSVT_MBR_INFO,
+		TB1.RCRT_PSCT_INFO,
+		TB1.PRC_INFO,
+		TB1.USE_YN,
+		TB2.MKSP_CLS_GRP_IDX,
+		TB2.SRT_TM,
+		TB2.END_TM,
+		TB2.GRP_NM,
+		TB2.GRP_ORD,
+		TB2.PRC,
+		TB2.PSCT,
+		TB2.FORM_URL
+	FROM
+		TBL_MKSP_CLS TB1
+	LEFT OUTER JOIN
+		TBL_MKSP_CLS_GRP TB2
+	ON
+		TB1.MKSP_CLS_IDX = TB2.MKSP_CLS_IDX
+	WHERE
+		TB1.MKSP_CLS_IDX = #{value}
+</select>
+
+<!-- 메이커스페이스 반 시간목록 -->
+<select id="selectMakerspaceClassGroupTimeList" parameterType="string" resultType="makerspaceClassGroupDTO">
+	SELECT
+		SRT_TM srtTm,
+		END_TM endTm
+	FROM
+		TBL_MKSP_CLS_GRP
+	WHERE
+		MKSP_CLS_IDX = #{value}
+	GROUP BY
+		SRT_TM, END_TM
+	ORDER BY
+		SRT_TM, END_TM
+</select>
+
+<!-- 메이커스페이스 교육과정 목록 -->
+<select id="selectMakerspaceClassCurriculumList" parameterType="string" resultType="makerspaceClassCurriculumDTO">
+	SELECT
+		MKSP_CLS_IDX mkspClsIdx,		<!-- INT(11) NOT NULL COMMENT '메이커스페이스 클래스 인덱스', -->
+		GRP_ORD grpOrd,			<!-- INT(11) NOT NULL COMMENT '반 순번', -->
+		CRCL_DT crclDt,			<!-- VARCHAR(10) NOT NULL COMMENT '교육일자', -->
+		CRCL_NM crclNm			<!-- VARCHAR(50) NOT NULL COMMENT '교육명', -->
+	FROM
+		TBL_MKSP_CLS_CRCL
+	WHERE
+		MKSP_CLS_IDX = #{value}
+	ORDER BY
+		GRP_ORD, CRCL_DT
+</select>
+
+<!-- 메이커스페이스 삭제 -->
+<update id="deleteMakerspaceClass" parameterType="string">
+	UPDATE
+		TBL_MKSP_CLS
+	SET
+		DEL_YN = 'Y'
+	WHERE
+		MKSP_CLS_IDX = #{mkspClsIdx}
+</update>
+
+<!-- 우드파크 클래스 등록 -->
+<insert id="insertWoodparkClass" parameterType="woodparkClassDTO">
+	INSERT INTO
+		TBL_WDPK_CLS
+	(
+		WDPK_CLS_IDX,			<!-- INT(11) NOT NULL AUTO_INCREMENT COMMENT '클래스 인덱스', -->
+		CLS_NM,					<!-- VARCHAR(50) NOT NULL COMMENT '클래스명', -->
+		USE_PRC_TYP_CD,			<!-- VARCHAR(50) NOT NULL COMMENT '사용료구분 공통코드(028)', -->
+		USE_PRC,				<!-- VARCHAR(10) NOT NULL COMMENT '사용료', -->
+		MVIN_YN,				<!-- VARCHAR(1) NOT NULL COMMENT '입주멤버 사용료 여부', -->
+		MVIN_PRC,				<!-- VARCHAR(10) NOT NULL COMMENT '입주멤버 사용료', -->
+		USE_YN					<!-- VARCHAR(1) NOT NULL COMMENT '사용여부', -->
+	) VALUES (
+	<if test="wdpkClsIdx == null or wdpkClsIdx.equals('')">
+		null,
+	</if>
+	<if test="wdpkClsIdx != null and !wdpkClsIdx.equals('')">
+		#{wdpkClsIdx},
+	</if>
+		#{clsNm},
+		#{usePrcTypCd},
+		#{usePrc},
+		#{mvinYn},
+		#{mvinPrc},
+		#{useYn}
+	)
+	ON DUPLICATE KEY UPDATE
+		CLS_NM = #{clsNm},
+		USE_PRC_TYP_CD = #{usePrcTypCd},
+		USE_PRC = #{usePrc},
+		MVIN_YN = #{mvinYn},
+		MVIN_PRC = #{mvinPrc},
+		USE_YN = #{useYn},
+		DEL_YN = 'N'
+</insert>
+
+<!-- 우드파크클래스 삭제 -->
+<update id="deleteWoodparkClass">
+	UPDATE
+		TBL_WDPK_CLS
+	SET
+		DEL_YN = 'Y'
+</update>
+
+<!-- 우드파크 클래스목록 -->
+<select id="selectWoodparkClassList" resultType="woodparkClassDTO">
+	SELECT
+		WDPK_CLS_IDX wdpkClsIdx,
+		CLS_NM clsNm,
+		USE_PRC_TYP_CD usePrcTypCd,
+		USE_PRC usePrc,
+		MVIN_YN mvinYn,
+		MVIN_PRC mvinPrc,
+		USE_YN useYn,
+		DEL_YN delYn,
+		CRE_DTTM creDttm,
+		MOD_DTTM modDttm
+	FROM
+		TBL_WDPK_CLS
+	WHERE
+		DEL_YN != 'Y'
+	ORDER BY
+		WDPK_CLS_IDX
+</select>
+
+<!-- 우드파크 클래스 일정 삭제 -->
+<delete id="deleteWoodparkClassSchedule" parameterType="reqFacilitiesMasterVO">
+	DELETE
+	FROM
+		TBL_WDPK_CLS_SCH
+	WHERE
+		FCT_MST_IDX = #{fctMstIdx}
+	AND CLND_DT BETWEEN CONCAT(#{year}, '.', #{month}, '.01') AND CONCAT(#{year}, '.', #{month}, '.31')
+</delete>
+
+<!-- 우드파크 클래스 일정 등록 -->
+<insert id="insertWoodparkClassSchedule" parameterType="woodparkClassScheduleDTO">
+	INSERT INTO
+		TBL_WDPK_CLS_SCH
+	(
+		FCT_MST_IDX,		<!-- INT(11) NOT NULL COMMENT '시설 인덱스', -->
+		CLND_DT,			<!-- VARCHAR(10) NOT NULL COMMENT '날짜', -->
+		SRT_TM,				<!-- VARCHAR(5) NOT NULL COMMENT '시작시간', -->
+		END_TM,				<!-- VARCHAR(5) NOT NULL COMMENT '종료시간', -->
+		WDPK_CLS_IDX		<!-- INT(11) NOT NULL COMMENT '클래스 인덱스', -->
+	) VALUES (
+		#{fctMstIdx},
+		#{clndDt},
+		#{srtTm},
+		#{endTm},
+		#{wdpkClsIdx}
+	)
+</insert>
+
+<!-- 우드파크 클래스 일정 목록 -->
+<select id="selectWoodparkClassScheduleList" parameterType="reqFacilitiesMasterVO" resultType="woodparkClassScheduleDTO">
+	SELECT
+		FCT_MST_IDX fctMstIdx,
+		CLND_DT clndDt,
+		SRT_TM srtTm,
+		END_TM endTm,
+		WDPK_CLS_IDX wdpkClsIdx
+	FROM
+		TBL_WDPK_CLS_SCH
+	WHERE
+		FCT_MST_IDX = #{fctMstIdx}
+	AND CLND_DT BETWEEN CONCAT(#{year}, '.', #{month}, '.01') AND CONCAT(#{year}, '.', #{month}, '.31')
+</select>
+
+<!-- 대관목록수 -->
+<select id="selectRentAreaCount" parameterType="reqRentAreaVO" resultType="int">
+	SELECT
+		COUNT(*)
+	FROM
+		TBL_RTA
+	WHERE
+		DEL_YN != 'Y'
+</select>
+
+<!-- 대관목록 -->
+<select id="selectRentAreaList" parameterType="reqRentAreaVO" resultType="rentTheAreaDTO">
+	SELECT
+		RTA_IDX	rtaIdx	,
+		TITL titl,
+		RTA_SRT_DTTM	rtaSrtDttm	,
+		RTA_END_DTTM	rtaEndDttm	,
+		USE_YN	useYn	,
+		DEL_YN	delYn	,
+		CRE_DTTM	creDttm	,
+		MOD_DTTM	modDttm
+	FROM
+		TBL_RTA
+	WHERE
+		DEL_YN != 'Y'
+	ORDER BY
+	<if test="sortType != null and sortType.equals('1')">
+		CRE_DTTM ASC,
+	</if>
+	<if test="sortType != null and sortType.equals('2')">
+		CRE_DTTM DESC,
+	</if>
+	<if test="sortType != null and sortType.equals('3')">
+		USE_YN ASC,
+	</if>
+	<if test="sortType != null and sortType.equals('4')">
+		USE_YN DESC,
+	</if>
+		RTA_IDX DESC
+	LIMIT
+		#{pageInfo.firstRecordIndex}, #{pageInfo.recordCountPerPage}
+</select>
+
+<!-- 대관등록 -->
+<insert id="insertRentArea" parameterType="rentTheAreaDTO" keyProperty="rtaIdx" useGeneratedKeys="true">
+	INSERT INTO
+		TBL_RTA
+	(
+		RTA_IDX,		<!-- INT(11) NOT NULL AUTO_INCREMENT COMMENT '대관 인덱스', -->
+		TITL,			<!-- VARCHAR(50) NOT NULL COMMENT '제목', -->
+		RTA_SRT_DTTM,	<!-- DATETIME NOT NULL COMMENT '대관 시작일시', -->
+		RTA_END_DTTM,	<!-- DATETIME NOT NULL COMMENT '대관 종료 일시', -->
+		USE_YN			<!-- VARCHAR(1) NOT NULL DEFAULT 'N' COMMENT '사용여부', -->
+	) VALUES (
+<choose>
+	<when test="rtaIdx == null or rtaIdx.equals('')">NULL,</when>
+	<otherwise>#{rtaIdx},</otherwise>
+</choose>
+		#{titl},
+		STR_TO_DATE(#{rtaSrtDttm}, '%Y.%m.%d %H:%i'),
+		STR_TO_DATE(#{rtaEndDttm}, '%Y.%m.%d %H:%i'),
+		#{useYn}
+	)
+	ON DUPLICATE KEY UPDATE
+		RTA_SRT_DTTM = STR_TO_DATE(#{rtaSrtDttm}, '%Y.%m.%d %H:%i'),
+		RTA_END_DTTM = STR_TO_DATE(#{rtaEndDttm}, '%Y.%m.%d %H:%i'),
+		USE_YN = #{useYn}
+</insert>
+
+<!-- 대관정보 -->
+<select id="selectRentAreaInfo" parameterType="string" resultType="rentTheAreaDTO">
+	SELECT
+		RTA_IDX	rtaIdx	,
+		TITL titl,
+		RTA_SRT_DTTM	rtaSrtDttm	,
+		RTA_END_DTTM	rtaEndDttm	,
+		USE_YN	useYn	,
+		DEL_YN	delYn	,
+		CRE_DTTM	creDttm	,
+		MOD_DTTM	modDttm
+	FROM
+		TBL_RTA
+	WHERE
+		RTA_IDX = #{value}
+</select>
+
+<!-- 장비 등록 -->
+<insert id="insertEquip" parameterType="equipmentMasterDTO">
+	INSERT INTO
+		TBL_EQP_MST
+	(
+		EQP_MST_IDX,			<!-- INT(11) NOT NULL AUTO_INCREMENT COMMENT '장비 인덱스', -->
+		EQP_NM,					<!-- VARCHAR(50) NOT NULL COMMENT '장비명', -->
+		EQP_HOUR_PRC,			<!-- INT(11) NOT NULL COMMENT '장비시간당가격', -->
+		EQP_HALF_HOUR_PRC,		<!-- INT(11) NOT NULL COMMENT '장비30분당가격', -->
+		EQP_TCNT,				<!-- INT(11) NOT NULL COMMENT '수량', -->
+		USE_YN					<!-- VARCHAR(1) NOT NULL COMMENT '사용여부', -->
+	) VALUES (
+	<if test="eqpMstIdx == null or eqpMstIdx.equals('')">
+		null,
+	</if>
+	<if test="eqpMstIdx != null and !eqpMstIdx.equals('')">
+		#{eqpMstIdx},
+	</if>
+		#{eqpNm},
+		#{eqpHourPrc},
+		#{eqpHalfHourPrc},
+		#{eqpTcnt},
+		#{useYn}
+	)
+	ON DUPLICATE KEY UPDATE
+		EQP_NM = #{eqpNm},
+		EQP_HOUR_PRC = #{eqpHourPrc},
+		EQP_HALF_HOUR_PRC = #{eqpHalfHourPrc},
+		EQP_TCNT = #{eqpTcnt},
+		USE_YN = #{useYn},
+		DEL_YN = 'N'
+</insert>
+
+<!-- 장비 삭제 -->
+<update id="deleteEquip">
+	UPDATE
+		TBL_EQP_MST
+	SET
+		DEL_YN = 'Y'
+</update>
+
+<!-- 장비 목록 -->
+<select id="selectEquipList" resultType="equipmentMasterDTO">
+	SELECT
+		EQP_MST_IDX	eqpMstIdx	,
+		EQP_NM	eqpNm	,
+		EQP_HOUR_PRC	eqpHourPrc	,
+		EQP_HALF_HOUR_PRC	eqpHalfHourPrc	,
+		EQP_TCNT	eqpTcnt	,
+		USE_YN	useYn	,
+		DEL_YN	delYn	,
+		CRE_DTTM	creDttm	,
+		MOD_DTTM	modDttm
+	FROM
+		TBL_EQP_MST
+	WHERE
+		DEL_YN != 'Y'
+	ORDER BY
+		EQP_MST_IDX
+</select>
+
+<!-- 시설관련장비삭제 -->
+<delete id="deleteFacilitiesEquip" parameterType="string">
+	DELETE
+	FROM
+		TBL_FCT_EQP
+	WHERE
+		FCT_MST_IDX = #{value}
+</delete>
+
+<!-- 시설관련장비등록 -->
+<insert id="insertFacilitiesEquip" parameterType="facilitiesEquipmentDTO">
+	INSERT INTO
+		TBL_FCT_EQP
+	(
+		FCT_MST_IDX,		<!-- INT(11) NOT NULL COMMENT '시설 인덱스', -->
+		EQP_MST_IDX			<!-- INT(11) NOT NULL COMMENT '장비 인덱스', -->
+	) VALUES (
+		#{fctMstIdx},
+		#{eqpMstIdx}
+	)
+</insert>
+
+<!-- 시설관련장비목록 -->
+<select id="selectFacilitiesEquipList" parameterType="string" resultType="equipmentMasterDTO">
+	SELECT
+		TB2.EQP_MST_IDX          eqpMstIdx,
+		TB2.EQP_NM               eqpNm,
+		TB2.EQP_HOUR_PRC         eqpHourPrc,
+		TB2.EQP_HALF_HOUR_PRC    eqpHalfHourPrc,
+		TB2.EQP_TCNT             eqpTcnt,
+		TB2.USE_YN               useYn
+	FROM
+		TBL_FCT_EQP TB1,
+		TBL_EQP_MST TB2
+	WHERE
+		TB1.FCT_MST_IDX = #{value}
+	AND TB2.DEL_YN != 'Y'
+	AND TB1.EQP_MST_IDX = TB2.EQP_MST_IDX
+</select>
+
+<!-- 대관장소목록 -->
+<select id="selectRentAreaFacilitiesList" parameterType="string" resultType="facilitiesMasterDTO">
+	SELECT
+		TB2.FCT_MST_IDX	fctMstIdx	,
+		TB2.RSVT_PLC_CD	rsvtPlcCd	,
+		TB2.FCT_NM	fctNm	,
+		TB2.ORD	ord	,
+		TB2.MIN_TM	minTm	,
+		TB2.RSVT_UNIT	rsvtUnit	,
+		TB2.DFT_PRC	dftPrc	,
+		TB2.ADD_PRC	addPrc	,
+		TB2.USE_SRT_DT	useSrtDt	,
+		TB2.USE_END_DT	useEndDt	,
+		TB2.OPR_TM_INFO	oprTmInfo	,
+		TB2.RSVT_MBR_INFO	rsvtMbrInfo	,
+		TB2.PSBL_MIN_PSCT	psblMinPsct	,
+		TB2.PSBL_MAX_PSCT	psblMaxPsct	,
+		TB2.FCT_FOA	fctFoa	,
+		TB2.TNM	tnm	,
+		TB2.MAX_OTP_SIZE	maxOtpSize	,
+		TB2.PRC_INFO	prcInfo	,
+		TB2.USE_YN	useYn
+	FROM
+		TBL_RTA_FCT TB1,
+		TBL_FCT_MST TB2
+	WHERE
+		TB1.RTA_IDX = #{value}
+	AND TB2.DEL_YN != 'Y'
+	AND TB1.FCT_MST_IDX = TB2.FCT_MST_IDX
+	ORDER BY
+		TB2.ORD
+</select>
+
+<!-- 대관장소삭제 -->
+<delete id="deleteRentAreaFacilities" parameterType="string">
+	DELETE
+	FROM
+		TBL_RTA_FCT
+	WHERE
+		RTA_IDX = #{value}
+</delete>
+
+<!-- 대관장소등록 -->
+<insert id="insertRentAreaFacilities" parameterType="rentTheAreaFacilitiesDTO" keyProperty="rtaIdx" useGeneratedKeys="true">
+	INSERT INTO /** kr.maxerve.admin.facilities.facilitiesDAO.insertRentAreaFacilities */
+		TBL_RTA_FCT
+	(
+		RTA_IDX,			<!-- INT(11) NOT NULL COMMENT '대관 인덱스', -->
+		FCT_MST_IDX			<!-- INT(11) NOT NULL COMMENT '시설 인덱스', -->
+	) VALUES (
+		#{rtaIdx},
+		#{fctMstIdx}
+	)
+</insert>
+
+<!-- 층별 호실 정보 -->
+<select id="selectFloorList" parameterType="facilitiesInfoDTO" resultType="facilitiesInfoDTO" >
+	SELECT
+		A.ROOM_NM,			<!-- 호실	varchar(50) -->
+		A.FLR,				<!-- 층수	int(11) -->
+		A.FCT_TYP_CD,		<!-- 시설구분 공통코드(031)	varchar(50) -->
+		A.LOC_IDX,			<!-- 관계지 인덱스 -->
+		A.FCT_NM,			<!-- 시설명	varchar(50) -->
+		A.FCT_CORD,			<!-- 시설 좌표	varchar(200) -->
+		A.URL,				<!-- 연결정보	varchar(200) -->
+		A.USE_YN			<!-- 사용여부	varchar(1) -->
+	FROM
+		TBL_FCT_INFO A
+	<if test="flr != null and flr != ''">
+	WHERE
+		FLR = #{flr}
+	</if>
+	ORDER BY SUBSTR(A.ROOM_NM,1,3) ASC
+</select>
+
+<!-- 층별 안내 -->
+<select id="selectFloorInfo" parameterType="facilitiesInfoDTO" resultType="facilitiesFloorDTO" >
+	SELECT
+	    FLR,
+	    FILE_PATH,
+	    FILE_INFO
+	FROM
+		TBL_FCT_FLR
+	WHERE
+		FLR = #{flr}
+</select>
+
+<!-- 층별 호실 수정 -->
+<update id="updateFloorRoomList" parameterType="facilitiesInfoDTO">
+	UPDATE
+		TBL_FCT_INFO
+	SET
+		FCT_TYP_CD	=	#{fctTypCd},	<!-- 시설구분 공통코드(031)	varchar(50) -->
+		LOC_IDX		=	#{locIdx},      <!-- 관계지 인덱스	varchar(50)	 -->
+		FCT_NM		=	#{fctNm},       <!-- 시설명	varchar(50)	 -->
+		URL			=	#{url},         <!-- 연결정보	varchar(200)	 -->
+		USE_YN		=	#{useYn}        <!-- 사용여부	varchar(1)	 -->
+	WHERE
+		ROOM_NM	=	#{roomNm}
+	AND FLR		=	#{flr}
+</update>
+
+<!-- 층별 안내 수정 -->
+<update id="updateFloorInfo" parameterType="facilitiesFloorDTO">
+	INSERT	INTO
+		TBL_FCT_FLR
+			(
+				FLR,
+				FILE_PATH,
+				FILE_INFO
+			)
+	VALUES
+			(
+				#{flr},			<!-- 층수	int(11) -->
+				#{filePath},	<!-- 층별안내 이미지	varchar(200) -->
+				#{fileInfo}		<!-- 층별안내 이미지 설명	varchar(20) -->
+			)
+	ON DUPLICATE KEY UPDATE
+		FILE_PATH	=	#{filePath},
+		FILE_INFO	=	#{fileInfo}
+</update>
+
+</mapper>

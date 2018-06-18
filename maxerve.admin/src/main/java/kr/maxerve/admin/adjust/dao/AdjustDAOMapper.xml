@@ -1,0 +1,630 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.maxerve.admin.adjust.adjustDAO">
+
+<!-- 	정산단체목록 -->
+	<select id="selectOrganizationList" resultType="adjustOrganizationMVO">
+		SELECT
+			TB1.*,
+			TB2.OZTN_NM,
+			TB2.CEO_NM,
+			TB2.CEO_EMIL,
+			TB2.CRN,
+			TB2.CEO_PHN
+		FROM
+			TBL_AJM_OZTN TB1,
+			TBL_MVIN_APLY TB2
+		WHERE
+			TB1.MVIN_APLY_IDX = TB2.MVIN_APLY_IDX
+	</select>
+
+<!-- 	정산단체등록 -->
+	<insert id="insertOrganization" parameterType="adjustOrganizationDTO">
+		INSERT INTO
+			TBL_AJM_OZTN
+		(
+			LOC_TYP_CD,			<!-- VARCHAR(50) NOT NULL COMMENT '정산종류 공통코드(002)', -->
+			MVIN_APLY_IDX,		<!-- INT(11) NOT NULL COMMENT '입주신청 인덱스', -->
+			USE_YN,				<!-- VARCHAR(1) NOT NULL COMMENT '사용여부', -->
+			SRT_DT,				<!-- VARCHAR(10) NOT NULL COMMENT '관리기간 시작일', -->
+			END_DT				<!-- VARCHAR(10) NOT NULL COMMENT '관리기간 종료일', -->
+		) VALUES (
+			#{locTypCd},
+			#{mvinAplyIdx},
+			#{useYn},
+			#{srtDt},
+			#{endDt}
+		) ON DUPLICATE KEY UPDATE
+			MVIN_APLY_IDX = #{locTypCd},
+			USE_YN = #{useYn},
+			SRT_DT = #{srtDt},
+			END_DT = #{endDt}
+	</insert>
+
+<!-- 	수수료 -->
+	<select id="selectFees" parameterType="string" resultType="string">
+		SELECT
+			FEES
+		FROM
+			TBL_PAY_FEES
+		WHERE
+			PAY_MTHD = #{value}
+	</select>
+
+<!-- 	수수료등록 -->
+	<insert id="insertFees" parameterType="payFeesDTO">
+		INSERT INTO
+			TBL_PAY_FEES
+		(
+			PAY_MTHD,		<!-- VARCHAR(10) NOT NULL COMMENT '결제수단(KAKAOPAY, CARD, BANK, VBANK, CELLPHONE)', -->
+			FEES			<!-- VARCHAR(10) NOT NULL COMMENT '수수료 퍼센트', -->
+		) VALUES (
+			#{payMthd},
+			#{fees}
+		) ON DUPLICATE KEY UPDATE
+			FEES = #{fees}
+	</insert>
+
+<!-- 	정산목록수 -->
+	<select id="selectSummaryCount" parameterType="reqAdjustVO" resultType="int">
+		SELECT
+			COUNT(DISTINCT
+	<choose>
+		<when test="adjustType.equalsIgnoreCase('1')">DATE_FORMAT(TB1.CRE_DTTM, '%Y.%m.%d')</when>
+		<when test="adjustType.equalsIgnoreCase('2')">DATE_FORMAT(TB1.CRE_DTTM, '%Y.%m')</when>
+		<when test="adjustType.equalsIgnoreCase('3')">DATE_FORMAT(TB1.CRE_DTTM, '%Y')</when>
+	</choose>
+		)
+		FROM
+			TBL_PAY TB1
+		WHERE
+			TB1.RST_CD != ''
+	<if test="srtDt != null and !srtDt.equals('')">
+		AND TB1.CRE_DTTM <![CDATA[>=]]> STR_TO_DATE(#{srtDt}, '%Y.%m.%d')
+	</if>
+
+	<if test="endDt != null and !endDt.equals('')">
+		AND TB1.CRE_DTTM <![CDATA[<=]]> STR_TO_DATE(#{endDt}, '%Y.%m.%d')
+	</if>
+	</select>
+
+<!-- 	정산목록 -->
+	<select id="selectSummaryList" parameterType="reqAdjustVO" resultType="adjustSummaryMVO">
+		SELECT
+			TB1.*
+		FROM
+		(
+			SELECT
+		<choose>
+			<when test="adjustType.equalsIgnoreCase('1')">DATE_FORMAT(TB1.CRE_DTTM, '%Y.%m.%d')</when>
+			<when test="adjustType.equalsIgnoreCase('2')">DATE_FORMAT(TB1.CRE_DTTM, '%Y.%m')</when>
+			<when test="adjustType.equalsIgnoreCase('3')">DATE_FORMAT(TB1.CRE_DTTM, '%Y')</when>
+		</choose> DT,
+				COUNT(*) TOTAL,
+				COUNT(IF(TB1.CNCL_RST_CD NOT IN (2001, 2002) AND TB1.APPR_YN = 'Y', 1, NULL)) APPR,
+				COUNT(IF(TB1.CNCL_RST_CD IN (2001, 2002), 1, NULL)) CANCEL,
+				COUNT(IF(TB1.APPR_YN != 'Y', 1, NULL)) ERROR,
+				SUM(IF(TB1.CNCL_RST_CD NOT IN (2001, 2002) AND TB1.APPR_YN = 'Y', TB1.PRC, NULL)) APPR_PRC,
+				COUNT(IF(TB1.CNCL_RST_CD IN (2001, 2002), TB1.PRC, NULL)) CANCEL_PRC,
+				COUNT(IF(TB1.APPR_YN != 'Y', TB1.PRC, NULL)) ERROR_PRC,
+				SUM(IF(TB1.CNCL_RST_CD NOT IN (2001, 2002) AND TB1.APPR_YN = 'Y', TB1.PRC * TB2.FEES / 100, NULL)) FEES
+			FROM
+				TBL_PAY TB1
+			LEFT OUTER JOIN
+				TBL_PAY_FEES TB2
+				ON
+					TB1.PAY_MTHD = TB2.PAY_MTHD
+			WHERE
+				TB1.RST_CD != ''
+		<if test="srtDt != null and !srtDt.equals('')">
+			AND TB1.CRE_DTTM <![CDATA[>=]]> STR_TO_DATE(#{srtDt}, '%Y.%m.%d')
+		</if>
+
+		<if test="endDt != null and !endDt.equals('')">
+			AND TB1.CRE_DTTM <![CDATA[<=]]> STR_TO_DATE(#{endDt}, '%Y.%m.%d')
+		</if>
+			GROUP BY
+		<choose>
+			<when test="adjustType.equalsIgnoreCase('1')">DATE_FORMAT(TB1.CRE_DTTM, '%Y.%m.%d')</when>
+			<when test="adjustType.equalsIgnoreCase('2')">DATE_FORMAT(TB1.CRE_DTTM, '%Y.%m')</when>
+			<when test="adjustType.equalsIgnoreCase('3')">DATE_FORMAT(TB1.CRE_DTTM, '%Y')</when>
+		</choose>
+		) TB1
+		WHERE
+			1=1
+	<if test="dt != null and !dt.equals('')">
+		AND TB1.DT = #{dt}
+	</if>
+		ORDER BY
+			TB1.DT
+	<if test="(dt == null or dt.equals('')) and (countPerPage gt 0)">
+		LIMIT #{limitIndex}, #{countPerPage}
+	</if>
+	</select>
+
+<!-- 	정산결제요약 -->
+	<select id="selectPaymentSummary" parameterType="reqAdjustVO" resultType="paymentSummaryMVO">
+		SELECT
+			COUNT(IF(TB1.PAY_MTHD = 'CARD' AND TB1.APPR_YN = 'Y' AND TB1.CNCL_RST_CD NOT IN (2001, 2002), 1, NULL)) APPR_CARD_COUNT,
+			SUM(IF(TB1.PAY_MTHD = 'CARD' AND TB1.APPR_YN = 'Y' AND TB1.CNCL_RST_CD NOT IN (2001, 2002), TB1.PRC, NULL)) APPR_CARD_PRC,
+			COUNT(IF(TB1.PAY_MTHD = 'BANK' AND TB1.APPR_YN = 'Y' AND TB1.CNCL_RST_CD NOT IN (2001, 2002), 1, NULL)) APPR_BANK_COUNT,
+			SUM(IF(TB1.PAY_MTHD = 'BANK' AND TB1.APPR_YN = 'Y' AND TB1.CNCL_RST_CD NOT IN (2001, 2002), TB1.PRC, NULL)) APPR_BANK_PRC,
+			COUNT(IF(TB1.PAY_MTHD = 'KAKAOPAY' AND TB1.APPR_YN = 'Y' AND TB1.CNCL_RST_CD NOT IN (2001, 2002), 1, NULL)) APPR_KAKAOPAY_COUNT,
+			SUM(IF(TB1.PAY_MTHD = 'KAKAOPAY' AND TB1.APPR_YN = 'Y' AND TB1.CNCL_RST_CD NOT IN (2001, 2002), TB1.PRC, NULL)) APPR_KAKAOPAY_PRC,
+
+			COUNT(IF(TB1.PAY_MTHD = 'CARD' AND TB1.CNCL_RST_CD IN (2001, 2002), 1, NULL)) CANCEL_CARD_COUNT,
+			SUM(IF(TB1.PAY_MTHD = 'CARD' AND TB1.CNCL_RST_CD IN (2001, 2002), TB1.PRC, NULL)) CANCEL_CARD_PRC,
+			COUNT(IF(TB1.PAY_MTHD = 'BANK' AND TB1.CNCL_RST_CD IN (2001, 2002), 1, NULL)) CANCEL_BANK_COUNT,
+			SUM(IF(TB1.PAY_MTHD = 'BANK' AND TB1.CNCL_RST_CD IN (2001, 2002), TB1.PRC, NULL)) CANCEL_BANK_PRC,
+			COUNT(IF(TB1.PAY_MTHD = 'KAKAOPAY' AND TB1.CNCL_RST_CD IN (2001, 2002), 1, NULL)) CANCEL_KAKAOPAY_COUNT,
+			SUM(IF(TB1.PAY_MTHD = 'KAKAOPAY' AND TB1.CNCL_RST_CD IN (2001, 2002), TB1.PRC, NULL)) CANCEL_KAKAOPAY_PRC,
+
+			COUNT(IF(TB1.PAY_MTHD = 'CARD' AND TB1.APPR_YN != 'Y', 1, NULL)) ERROR_CARD_COUNT,
+			SUM(IF(TB1.PAY_MTHD = 'CARD' AND TB1.APPR_YN != 'Y', TB1.PRC, NULL)) ERROR_CARD_PRC,
+			COUNT(IF(TB1.PAY_MTHD = 'BANK' AND TB1.APPR_YN != 'Y', 1, NULL)) ERROR_BANK_COUNT,
+			SUM(IF(TB1.PAY_MTHD = 'BANK' AND TB1.APPR_YN != 'Y', TB1.PRC, NULL)) ERROR_BANK_PRC,
+			COUNT(IF(TB1.PAY_MTHD = 'KAKAOPAY' AND TB1.APPR_YN != 'Y', 1, NULL)) ERROR_KAKAOPAY_COUNT,
+			SUM(IF(TB1.PAY_MTHD = 'KAKAOPAY' AND TB1.APPR_YN != 'Y', TB1.PRC, NULL)) ERROR_KAKAOPAY_PRC
+		FROM
+			TBL_PAY TB1
+		LEFT OUTER JOIN
+			TBL_PAY_FEES TB2
+			ON
+				TB1.PAY_MTHD = TB2.PAY_MTHD
+		WHERE
+			TB1.RST_CD != ''
+		AND TB1.CRE_DTTM <![CDATA[>=]]> STR_TO_DATE(#{srtDt}, '%Y.%m.%d %H:%i:%s')
+		AND TB1.CRE_DTTM <![CDATA[<=]]> STR_TO_DATE(#{endDt}, '%Y.%m.%d %H:%i:%s')
+	</select>
+
+<!-- 	단체별정산목록수 -->
+	<select id="selectSummaryOrganizationCount" parameterType="reqOrganizationSummaryVO" resultType="int">
+		SELECT
+			COUNT(DISTINCT DATE_FORMAT(TB1.CRE_DTTM, '%Y.%m'))
+		FROM
+		(
+			SELECT
+				TB1.*
+			FROM
+				TBL_PAY TB1,
+				TBL_FCT_RSVT TB2,
+				TBL_FCT_MST TB3,
+				TBL_AJM_OZTN TB4,
+				TBL_MVIN_APLY TB5
+			WHERE
+				TB1.APPR_YN = 'Y'
+			AND TB1.CNCL_RST_CD NOT IN (2001, 2002)
+			AND TB1.LOC_TYP_CD = '010018'
+			AND TB1.LOC_IDX = TB2.FCT_RSVT_IDX
+			AND TB2.FCT_MST_IDX = TB3.FCT_MST_IDX
+			AND TB3.RSVT_PLC_CD = TB4.LOC_TYP_CD
+			AND TB4.MVIN_APLY_IDX = TB5.MVIN_APLY_IDX
+
+		<if test="srtDt != null and !srtDt.equals('')">
+			AND TB1.CRE_DTTM <![CDATA[>=]]> STR_TO_DATE(#{srtDt}, '%Y.%m.%d')
+		</if>
+
+		<if test="endDt != null and !endDt.equals('')">
+			AND TB1.CRE_DTTM <![CDATA[<=]]> STR_TO_DATE(#{endDt}, '%Y.%m.%d')
+		</if>
+
+			UNION
+
+			SELECT
+				TB1.*
+			FROM
+				TBL_PAY TB1,
+				TBL_SIPL_APLY TB2,
+				TBL_EVT TB3
+			WHERE
+				TB1.APPR_YN = 'Y'
+			AND TB1.CNCL_RST_CD NOT IN (2001, 2002)
+			AND TB1.LOC_TYP_CD = '010015'
+			AND TB1.LOC_IDX = TB2.SIPL_APLY_IDX
+			AND TB2.LOC_TYP_CD = '010005'
+			AND TB2.LOC_IDX = TB3.EVT_IDX
+
+		<if test="srtDt != null and !srtDt.equals('')">
+			AND TB1.CRE_DTTM <![CDATA[>=]]> STR_TO_DATE(#{srtDt}, '%Y.%m.%d')
+		</if>
+
+		<if test="endDt != null and !endDt.equals('')">
+			AND TB1.CRE_DTTM <![CDATA[<=]]> STR_TO_DATE(#{endDt}, '%Y.%m.%d')
+		</if>
+		) TB1
+	</select>
+
+<!-- 	단체별정산목록 -->
+	<select id="selectSummaryOrganizationList" parameterType="reqOrganizationSummaryVO" resultType="adjustSummaryMVO">
+		SELECT
+			TB1.*
+		FROM
+		(
+			SELECT
+				DATE_FORMAT(TB1.CRE_DTTM, '%Y.%m') DT,
+				COUNT(DISTINCT TB1.OZTN_LOC_TYP_CD, TB1.OZTN_LOC_IDX) TOTAL,
+				COUNT(1) APPR,
+				SUM(TB1.PRC + IFNULL(TB1.PRC*TB1.FEES/100, 0)) APPR_PRC
+			FROM
+			(
+				SELECT
+					TB1.*,
+					'010010' OZTN_LOC_TYP_CD,
+					TB4.MVIN_APLY_IDX OZTN_LOC_IDX
+				FROM
+				(
+					SELECT
+						TB1.*,
+						TB2.FEES
+					FROM
+						TBL_PAY TB1
+					LEFT OUTER JOIN
+						TBL_PAY_FEES TB2
+						ON
+							TB1.PAY_MTHD = TB2.PAY_MTHD
+				)	TB1,
+					TBL_FCT_RSVT TB2,
+					TBL_FCT_MST TB3,
+					TBL_AJM_OZTN TB4,
+					TBL_MVIN_APLY TB5,
+					TBL_PAY_FEES TB6
+				WHERE
+					TB1.APPR_YN = 'Y'
+				AND TB1.CNCL_RST_CD NOT IN (2001, 2002)
+				AND TB1.LOC_TYP_CD = '010018'
+				AND TB1.LOC_IDX = TB2.FCT_RSVT_IDX
+				AND TB2.FCT_MST_IDX = TB3.FCT_MST_IDX
+				AND TB3.RSVT_PLC_CD = TB4.LOC_TYP_CD
+				AND TB4.MVIN_APLY_IDX = TB5.MVIN_APLY_IDX
+
+			<if test="srtDt != null and !srtDt.equals('')">
+				AND TB1.CRE_DTTM <![CDATA[>=]]> STR_TO_DATE(#{srtDt}, '%Y.%m.%d')
+			</if>
+
+			<if test="endDt != null and !endDt.equals('')">
+				AND TB1.CRE_DTTM <![CDATA[<=]]> STR_TO_DATE(#{endDt}, '%Y.%m.%d')
+			</if>
+
+				UNION
+
+				SELECT
+					TB1.*,
+					'010001' OZTN_LOC_TYP_CD,
+					TB3.MBR_IDX OZTN_LOC_IDX
+				FROM
+				(
+					SELECT
+						TB1.*,
+						TB2.FEES
+					FROM
+						TBL_PAY TB1
+					LEFT OUTER JOIN
+						TBL_PAY_FEES TB2
+						ON
+							TB1.PAY_MTHD = TB2.PAY_MTHD
+				)	TB1,
+					TBL_SIPL_APLY TB2,
+					TBL_EVT TB3
+				WHERE
+					TB1.APPR_YN = 'Y'
+				AND TB1.CNCL_RST_CD NOT IN (2001, 2002)
+				AND TB1.LOC_TYP_CD = '010015'
+				AND TB1.LOC_IDX = TB2.SIPL_APLY_IDX
+				AND TB2.LOC_TYP_CD = '010005'
+				AND TB2.LOC_IDX = TB3.EVT_IDX
+
+			<if test="srtDt != null and !srtDt.equals('')">
+				AND TB1.CRE_DTTM <![CDATA[>=]]> STR_TO_DATE(#{srtDt}, '%Y.%m.%d')
+			</if>
+
+			<if test="endDt != null and !endDt.equals('')">
+				AND TB1.CRE_DTTM <![CDATA[<=]]> STR_TO_DATE(#{endDt}, '%Y.%m.%d')
+			</if>
+			) TB1
+			GROUP BY
+				DATE_FORMAT(TB1.CRE_DTTM, '%Y.%m')
+		) TB1
+		WHERE
+			1=1
+	<if test="dt != null and !dt.equals('')">
+		AND TB1.DT = #{dt}
+	</if>
+		ORDER BY
+			TB1.DT
+	<if test="(dt == null or dt.equals('')) and (countPerPage gt 0)">
+		LIMIT #{limitIndex}, #{countPerPage}
+	</if>
+	</select>
+
+<!-- 	단체별정산수 -->
+	<select id="selectHistoryCount" parameterType="reqAdjustHistoryVO" resultType="int">
+		SELECT
+			COUNT(DISTINCT TB1.OZTN_LOC_TYP_CD, TB1.OZTN_LOC_IDX)
+		FROM
+		(
+			SELECT
+				TB1.*,
+				'010010' OZTN_LOC_TYP_CD,
+				TB4.MVIN_APLY_IDX OZTN_LOC_IDX,
+				TB5.OZTN_NM,
+				TB5.CEO_NM
+			FROM
+			(
+				SELECT
+					TB1.*,
+					TB2.FEES
+				FROM
+					TBL_PAY TB1
+				LEFT OUTER JOIN
+					TBL_PAY_FEES TB2
+					ON
+						TB1.PAY_MTHD = TB2.PAY_MTHD
+			)	TB1,
+				TBL_FCT_RSVT TB2,
+				TBL_FCT_MST TB3,
+				TBL_AJM_OZTN TB4,
+				TBL_MVIN_APLY TB5,
+				TBL_PAY_FEES TB6
+			WHERE
+				TB1.APPR_YN = 'Y'
+			AND TB1.CNCL_RST_CD NOT IN (2001, 2002)
+			AND TB1.LOC_TYP_CD = '010018'
+			AND TB1.LOC_IDX = TB2.FCT_RSVT_IDX
+			AND TB2.FCT_MST_IDX = TB3.FCT_MST_IDX
+			AND TB3.RSVT_PLC_CD = TB4.LOC_TYP_CD
+			AND TB4.MVIN_APLY_IDX = TB5.MVIN_APLY_IDX
+			AND TB1.CRE_DTTM <![CDATA[>=]]> STR_TO_DATE(#{srtDt}, '%Y.%m.%d')
+			AND TB1.CRE_DTTM <![CDATA[<=]]> STR_TO_DATE(CONCAT(#{endDt}, ' 23:59:59'), '%Y.%m.%d %H:%i:%s')
+
+		<if test="oztnNm != null and !oztnNm.equals('')">
+			AND (
+				TB5.OZTN_NM LIKE CONCAT('%', #{oztnNm}, '%')
+				OR
+				TB5.CEO_NM LIKE  CONCAT('%', #{oztnNm}, '%')
+			)
+		</if>
+
+		<if test="ajmYn != null and ajmYn.equalsIgnoreCase('Y')">
+			AND EXISTS (
+				SELECT
+					1
+				FROM
+					TBL_AJM_HSTR
+				WHERE
+					AJM_YM = LEFT(#{srtDt}, 7)
+				AND LOC_TYP_CD = '010010'
+				AND LOC_IDX = TB4.MVIN_APLY_IDX
+			)
+		</if>
+
+			UNION
+
+			SELECT
+				TB1.*,
+				'010001' OZTN_LOC_TYP_CD,
+				TB3.MBR_IDX OZTN_LOC_IDX,
+				TB4.OZTN_NM,
+				TB4.CEO_NM
+			FROM
+			(
+				SELECT
+					TB1.*,
+					TB2.FEES
+				FROM
+					TBL_PAY TB1
+				LEFT OUTER JOIN
+					TBL_PAY_FEES TB2
+					ON
+						TB1.PAY_MTHD = TB2.PAY_MTHD
+			)	TB1,
+				TBL_SIPL_APLY TB2,
+				TBL_EVT TB3,
+				TBL_MBR TB4
+			WHERE
+				TB1.APPR_YN = 'Y'
+			AND TB1.CNCL_RST_CD NOT IN (2001, 2002)
+			AND TB1.LOC_TYP_CD = '010015'
+			AND TB1.LOC_IDX = TB2.SIPL_APLY_IDX
+			AND TB2.LOC_TYP_CD = '010005'
+			AND TB2.LOC_IDX = TB3.EVT_IDX
+			AND TB3.MBR_IDX = TB4.MBR_IDX
+			AND TB1.CRE_DTTM <![CDATA[>=]]> STR_TO_DATE(#{srtDt}, '%Y.%m.%d')
+			AND TB1.CRE_DTTM <![CDATA[<=]]> STR_TO_DATE(CONCAT(#{endDt}, ' 23:59:59'), '%Y.%m.%d %H:%i:%s')
+
+		<if test="oztnNm != null and !oztnNm.equals('')">
+			AND (
+				TB4.OZTN_NM LIKE CONCAT('%', #{oztnNm}, '%')
+				OR
+				TB4.CEO_NM LIKE  CONCAT('%', #{oztnNm}, '%')
+			)
+		</if>
+
+		<if test="ajmYn != null and ajmYn.equalsIgnoreCase('Y')">
+			AND EXISTS (
+				SELECT
+					1
+				FROM
+					TBL_AJM_HSTR
+				WHERE
+					AJM_YM = LEFT(#{srtDt}, 7)
+				AND LOC_TYP_CD = '010001'
+				AND LOC_IDX = TB3.MBR_IDX
+			)
+		</if>
+
+		) TB1
+	</select>
+
+<!-- 	단체별정산목록 -->
+	<select id="selectHistoryList" parameterType="reqAdjustHistoryVO" resultType="adjustHistoryMVO">
+		SELECT
+			TB1.*,
+			#{endDt} AJM_DT,
+		IF((
+			SELECT
+				COUNT(1)
+			FROM
+				TBL_AJM_HSTR
+			WHERE
+				AJM_YM = LEFT(#{srtDt}, 7)
+			AND LOC_TYP_CD = TB1.LOC_TYP_CD
+			AND LOC_IDX = TB1.LOC_IDX
+		) > 0, 'Y', 'N') AJM_YN
+		FROM
+		(
+			SELECT
+				TB1.OZTN_LOC_TYP_CD LOC_TYP_CD,
+				TB1.OZTN_LOC_IDX LOC_IDX,
+				MIN(TB1.OZTN_NM) OZTN_NM,
+				MIN(TB1.CEO_NM) CEO_NM,
+				COUNT(1) COUNT,
+				SUM(TB1.PRC) PRC,
+				SUM(TB1.PRC*TB1.FEES/100) FEES
+			FROM
+			(
+				SELECT
+					TB1.*,
+					'010010' OZTN_LOC_TYP_CD,
+					TB4.MVIN_APLY_IDX OZTN_LOC_IDX,
+					TB5.OZTN_NM,
+					TB5.CEO_NM
+				FROM
+				(
+					SELECT
+						TB1.*,
+						TB2.FEES
+					FROM
+						TBL_PAY TB1
+					LEFT OUTER JOIN
+						TBL_PAY_FEES TB2
+						ON
+							TB1.PAY_MTHD = TB2.PAY_MTHD
+				)	TB1,
+					TBL_FCT_RSVT TB2,
+					TBL_FCT_MST TB3,
+					TBL_AJM_OZTN TB4,
+					TBL_MVIN_APLY TB5,
+					TBL_PAY_FEES TB6
+				WHERE
+					TB1.APPR_YN = 'Y'
+				AND TB1.CNCL_RST_CD NOT IN (2001, 2002)
+				AND TB1.LOC_TYP_CD = '010018'
+				AND TB1.LOC_IDX = TB2.FCT_RSVT_IDX
+				AND TB2.FCT_MST_IDX = TB3.FCT_MST_IDX
+				AND TB3.RSVT_PLC_CD = TB4.LOC_TYP_CD
+				AND TB4.MVIN_APLY_IDX = TB5.MVIN_APLY_IDX
+				AND TB1.CRE_DTTM <![CDATA[>=]]> STR_TO_DATE(#{srtDt}, '%Y.%m.%d')
+				AND TB1.CRE_DTTM <![CDATA[<=]]> STR_TO_DATE(CONCAT(#{endDt}, ' 23:59:59'), '%Y.%m.%d %H:%i:%s')
+
+			<if test="oztnNm != null and !oztnNm.equals('')">
+				AND (
+					TB5.OZTN_NM LIKE CONCAT('%', #{oztnNm}, '%')
+					OR
+					TB5.CEO_NM LIKE  CONCAT('%', #{oztnNm}, '%')
+				)
+			</if>
+
+			<if test="ajmYn != null and ajmYn.equalsIgnoreCase('Y')">
+				AND EXISTS (
+					SELECT
+						1
+					FROM
+						TBL_AJM_HSTR
+					WHERE
+						AJM_YM = LEFT(#{srtDt}, 7)
+					AND LOC_TYP_CD = '010010'
+					AND LOC_IDX = TB4.MVIN_APLY_IDX
+				)
+			</if>
+
+				UNION
+
+				SELECT
+					TB1.*,
+					'010001' OZTN_LOC_TYP_CD,
+					TB3.MBR_IDX OZTN_LOC_IDX,
+					TB4.OZTN_NM,
+					TB4.CEO_NM
+				FROM
+				(
+					SELECT
+						TB1.*,
+						TB2.FEES
+					FROM
+						TBL_PAY TB1
+					LEFT OUTER JOIN
+						TBL_PAY_FEES TB2
+						ON
+							TB1.PAY_MTHD = TB2.PAY_MTHD
+				)	TB1,
+					TBL_SIPL_APLY TB2,
+					TBL_EVT TB3,
+					TBL_MBR TB4
+				WHERE
+					TB1.APPR_YN = 'Y'
+				AND TB1.CNCL_RST_CD NOT IN (2001, 2002)
+				AND TB1.LOC_TYP_CD = '010015'
+				AND TB1.LOC_IDX = TB2.SIPL_APLY_IDX
+				AND TB2.LOC_TYP_CD = '010005'
+				AND TB2.LOC_IDX = TB3.EVT_IDX
+				AND TB3.MBR_IDX = TB4.MBR_IDX
+				AND TB1.CRE_DTTM <![CDATA[>=]]> STR_TO_DATE(#{srtDt}, '%Y.%m.%d')
+				AND TB1.CRE_DTTM <![CDATA[<=]]> STR_TO_DATE(CONCAT(#{endDt}, ' 23:59:59'), '%Y.%m.%d %H:%i:%s')
+
+			<if test="oztnNm != null and !oztnNm.equals('')">
+				AND (
+					TB4.OZTN_NM LIKE CONCAT('%', #{oztnNm}, '%')
+					OR
+					TB4.CEO_NM LIKE  CONCAT('%', #{oztnNm}, '%')
+				)
+			</if>
+
+			<if test="ajmYn != null and ajmYn.equalsIgnoreCase('Y')">
+				AND EXISTS (
+					SELECT
+						1
+					FROM
+						TBL_AJM_HSTR
+					WHERE
+						AJM_YM = LEFT(#{srtDt}, 7)
+					AND LOC_TYP_CD = '010001'
+					AND LOC_IDX = TB3.MBR_IDX
+				)
+			</if>
+
+			) TB1
+			GROUP BY
+				TB1.LOC_TYP_CD, TB1.LOC_IDX
+		) TB1
+		WHERE
+			1=1
+	<if test="locTypCd != null and !locTypCd.equals('')">
+		AND TB1.LOC_TYP_CD = #{locTypCd}
+	</if>
+	<if test="locIdx != null and !locIdx.equals('')">
+		AND TB1.LOC_IDX = #{locIdx}
+	</if>
+		ORDER BY
+			TB1.LOC_TYP_CD, TB1.LOC_IDX
+	<if test="(locTypCd == null or locTypCd.equals('') or locIdx == null or locIdx.equals('')) and (countPerPage gt 0)">
+		LIMIT #{limitIndex}, #{countPerPage}
+	</if>
+	</select>
+
+<!-- 	정산완료등록 -->
+	<insert id="insertHistory" parameterType="adjustHistoryDTO">
+		INSERT INTO
+			TBL_AJM_HSTR
+		(
+			AJM_YM,			<!-- VARCHAR(6) NOT NULL COMMENT '정산년월', -->
+			LOC_TYP_CD,		<!-- VARCHAR(50) NOT NULL COMMENT '위치공통코드(010)', -->
+			LOC_IDX			<!-- INT(11) NOT NULL COMMENT '위치 인덱스', -->
+		) VALUES (
+			#{ajmYm},
+			#{locTypCd},
+			#{locIdx}
+		)
+	</insert>
+</mapper>

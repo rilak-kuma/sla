@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.maxerve.admin.calendar.calendarDAO">
+<!-- 달력목록 -->
+<select id="selectList" parameterType="calendarVO" resultType="calendarDTO">
+	SELECT
+		CLND_DT  clndDt,
+		LNR_DT   lnrDt,
+		YUN_YN   yunYn,
+		GANJI    ganji,
+		DOW      dow,
+		HDY_YN   hdyYn
+	FROM
+		TBL_CLND
+	WHERE
+		CLND_DT BETWEEN #{srtDt} AND #{endDt}
+	ORDER BY
+		CLND_DT
+</select>
+
+<!-- 	시간목록 -->
+<select id="selectTimeList" parameterType="map" resultType="timeDTO">
+	SELECT
+		*
+	FROM
+		TBL_TM
+	WHERE
+		1=1
+	<if test="term.equalsIgnoreCase('60')">
+	AND TM LIKE '%00'
+	</if>
+	ORDER BY
+		TM
+</select>
+</mapper>

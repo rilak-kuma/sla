@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.maxerve.admin.adjust.SponsorDAO">
+
+	<sql id="listQuery">
+		FROM
+		(
+			SELECT
+				TB1.*,
+				TB2.FEES
+			FROM
+				TBL_PAY TB1
+			LEFT OUTER JOIN
+				TBL_PAY_FEES TB2
+				ON
+					TB1.PAY_MTHD = TB2.PAY_MTHD
+		)	TB1,
+			TBL_SPO TB2,
+			TBL_PJT TB3
+		WHERE
+			TB1.APPR_YN = 'Y'
+		AND TB1.LOC_TYP_CD = '010014'
+		AND TB1.LOC_IDX = TB2.SPO_IDX
+		AND TB2.LOC_TYP_CD = '010004'
+		AND TB2.LOC_IDX = TB3.PJT_IDX
+	<if test="srtDt != null and !srtDt.equals('')">
+		AND TB2.CRE_DTTM <![CDATA[>=]]> STR_TO_DATE(CONCAT(#{srtDt}, ' 00:00:00'), '%Y.%m.%d %H:%i:%s')
+	</if>
+	<if test="endDt != null and !endDt.equals('')">
+		AND TB2.CRE_DTTM <![CDATA[<=]]> STR_TO_DATE(CONCAT(#{endDt}, ' 23:59:59'), '%Y.%m.%d %H:%i:%s')
+	</if>
+	<if test="payMthd != null and !payMthd.equals('')">
+		AND TB1.PAY_MTHD = #{payMthd}
+	</if>
+<if test="srchWord != null and !srchWord.equals('')">
+	<choose>
+		<when test="srchTyp.equalsIgnoreCase('1')">
+		AND TB2.SPO_NM LIKE CONCAT('%', #{srchWord}, '%')
+		</when>
+
+		<when test="srchTyp.equalsIgnoreCase('2')">
+		AND TB3.PJT_TITL LIKE CONCAT('%', #{srchWord}, '%')
+		</when>
+	</choose>
+</if>
+
+	<if test="ym != null and !ym.equals('')">
+		AND DATE_FORMAT(TB1.CRE_DTTM, '%Y.%m') = #{ym}
+	</if>
+
+	<if test="pjtIdx != null and !pjtIdx.equals('')">
+		AND TB2.LOC_IDX = #{pjtIdx}
+	</if>
+	</sql>
+
+<!-- 	후원현황목록 -->
+	<select id="selectList" parameterType="reqSponsorVO" resultType="sponsorMVO">
+		SELECT
+			TB2.*,
+			TB3.PJT_TITL,
+			TB1.PAY_IDX,
+			TB1.PAY_MTHD,
+			TB1.FEES
+		<include refid="listQuery" />
+		ORDER BY
+			TB2.SPO_IDX DESC
+	<if test="countPerPage gt 0">
+		LIMIT #{limitIndex}, #{countPerPage}
+	</if>
+	</select>
+
+<!-- 	후원현황수 -->
+	<select id="selectCount" parameterType="reqSponsorVO" resultType="int">
+		SELECT
+			COUNT(1)
+		<include refid="listQuery" />
+	</select>
+
+<!-- 	후원금정산수 -->
+	<select id="selectAdjustCount" parameterType="reqSponsorAdjustVO" resultType="int">
+		SELECT
+			COUNT(DISTINCT DATE_FORMAT(TB1.CRE_DTTM, '%Y.%m'),TB1.LOC_IDX)
+		FROM
+			TBL_SPO TB1,
+			TBL_PAY TB2,
+			TBL_PJT TB3,
+			TBL_MBR TB4
+		WHERE
+			TB1.LOC_TYP_CD = '010004'
+		AND TB2.APPR_YN = 'Y'
+		AND TB2.CNCL_RST_CD NOT IN ('2001', '2002', '2211')
+		AND TB2.LOC_TYP_CD = '010014'
+		AND TB1.SPO_IDX = TB2.LOC_IDX
+		AND TB1.LOC_IDX = TB3.PJT_IDX
+		AND TB3.MBR_IDX = TB4.MBR_IDX
+	<if test="srchDt != null and !srchDt.equals('')">
+		AND DATE_FORMAT(TB1.CRE_DTTM, '%Y.%m') = #{srchDt}
+	</if>
+	</select>
+
+<!-- 	후원금정산목록 -->
+	<select id="selectAdjustList" parameterType="reqSponsorAdjustVO" resultType="sponsorMVO">
+		SELECT
+			TB1.LOC_IDX,
+			DATE_FORMAT(TB1.CRE_DTTM, '%Y.%m') CRE_DTTM,
+			MIN(TB4.OZTN_NM) OZTN_NM,
+			MIN(TB3.PJT_TITL) PJT_TITL,
+			MIN(TB3.SRT_DTTM) SRT_DTTM,
+			MIN(TB3.END_DTTM) END_DTTM,
+			COUNT(1) COUNT,
+			SUM(TB1.SPO_AOM) SPO_AOM,
+			SUM(TB1.SPO_AOM*TB2.FEES) FEES,
+			COUNT(IF(TB2.PAY_MTHD = 'CARD', 1, NULL)) CARD_AJM_COUNT,
+			SUM(IF(TB2.PAY_MTHD = 'CARD', TB1.SPO_AOM + IFNULL(TB1.SPO_AOM*TB2.FEES, 0), NULL)) CARD_AJM_PRC,
+			COUNT(IF(TB2.PAY_MTHD = 'BANK', 1, NULL)) BANK_AJM_COUNT,
+			SUM(IF(TB2.PAY_MTHD = 'BANK', TB1.SPO_AOM + IFNULL(TB1.SPO_AOM*TB2.FEES, 0), NULL)) BANK_AJM_PRC,
+			COUNT(IF(TB2.PAY_MTHD = 'KAKAOPAY', 1, NULL)) KAKAOPAY_AJM_COUNT,
+			SUM(IF(TB2.PAY_MTHD = 'KAKAOPAY', TB1.SPO_AOM + IFNULL(TB1.SPO_AOM*TB2.FEES, 0), NULL)) KAKAOPAY_AJM_PRC,
+			COUNT(IF(TB2.PAY_MTHD = 'CELLPHONE', 1, NULL)) CELLPHONE_AJM_COUNT,
+			SUM(IF(TB2.PAY_MTHD = 'CELLPHONE', TB1.SPO_AOM + IFNULL(TB1.SPO_AOM*TB2.FEES, 0), NULL)) CELLPHONE_AJM_PRC
+		FROM
+			TBL_SPO TB1,
+		(
+			SELECT
+				TB1.*,
+				TB2.FEES
+			FROM
+				TBL_PAY TB1
+			LEFT OUTER JOIN
+				TBL_PAY_FEES TB2
+				ON
+					TB1.PAY_MTHD = TB2.PAY_MTHD
+		)	TB2,
+			TBL_PJT TB3,
+			TBL_MBR TB4
+		WHERE
+			TB1.LOC_TYP_CD = '010004'
+		AND TB2.APPR_YN = 'Y'
+		AND TB2.CNCL_RST_CD NOT IN ('2001', '2002', '2211')
+		AND TB2.LOC_TYP_CD = '010014'
+		AND TB1.SPO_IDX = TB2.LOC_IDX
+		AND TB1.LOC_IDX = TB3.PJT_IDX
+		AND TB3.MBR_IDX = TB4.MBR_IDX
+	<if test="srchDt != null and !srchDt.equals('')">
+		AND DATE_FORMAT(TB1.CRE_DTTM, '%Y.%m') = #{srchDt}
+	</if>
+
+	<if test="dt != null and !dt.equals('')">
+		AND DATE_FORMAT(TB1.CRE_DTTM, '%Y.%m') = #{dt}
+	</if>
+
+	<if test="pjtIdx != null and !pjtIdx.equals('')">
+		AND TB1.LOC_IDX = #{pjtIdx}
+	</if>
+		GROUP BY
+			DATE_FORMAT(TB1.CRE_DTTM, '%Y.%m'),
+			TB1.LOC_IDX
+		ORDER BY
+			DATE_FORMAT(TB1.CRE_DTTM, '%Y.%m'),
+			TB1.LOC_IDX
+	<if test="(dt == null or dt.equals('') or pjtIdx == null or pjtIdx.equals('')) and (countPerPage gt 0)">
+		LIMIT #{limitIndex}, #{countPerPage}
+	</if>
+	</select>
+</mapper>

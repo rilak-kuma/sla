@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.maxerve.admin.activity.proposeDAO">
+
+	<select id="selecProposeList" parameterType="reqProposeVO" resultType="proposeMVO" >
+	SELECT *
+	FROM (
+			SELECT
+				@rownum:=@rownum+1	rownum,
+				A.PRP_IDX			prpIdx,			<!-- int(11) NOT NULL AUTOINCREMENT COMMENT '제안 인덱스' -->
+				A.MBR_IDX			mbrIdx,			<!-- int(11) NOT NULL COMMENT '회원 인덱스' -->
+				A.TITL            	titl,			<!-- varchar(50) NOT NULL COMMENT '제목' -->
+				A.BODY            	body,			<!-- mediumtext NOT NULL COMMENT '본문' -->
+				A.USE_YN 			useYn,			<!-- 전시(사용)여부	varchar(1) -->
+				A.FILE_PATH       	filePath,		<!-- varchar(200) NOT NULL COMMENT '섬네일 이미지 패스' -->
+				DATE_FORMAT(A.CRE_DTTM, '%Y.%m.%d')        creDttm,			<!-- datetime NOT NULL DEFAULT CURRENTTIMESTAMP COMMENT '생성일시' -->
+				B.CEO_NM 			ceoNm,			<!-- 등록자명(ceo명) -->
+	      		B.OZTN_NM 			oztnNm,			<!-- 단체명	-->
+	      		(	SELECT COUNT(1)
+	      			FROM
+	      				TBL_CMMT C
+	      			WHERE
+	      				C.CMMT_LOC_CD = #{cmmtLocCd}
+	      			AND	C.TBL_IDX = A.PRP_IDX
+	      			AND DEL_YN = 'N'	)		commentCnt		<!-- 댓글 수 -->
+			FROM
+				TBL_PRP A,
+				TBL_MBR B,
+				(SELECT @rownum:=0) ROW
+			WHERE
+	      		A.MBR_IDX = B.MBR_IDX
+			AND	DEL_YN = 'N'
+	      	<if test='creDttmOne != null and creDttmOne != ""'>	
+				AND DATE_FORMAT(A.CRE_DTTM, '%Y%m%d') >= REPLACE(#{creDttmOne}, '.', '')
+			</if>
+			<if test='creDttmTwo != null and creDttmTwo != ""'>	
+				<![CDATA[AND DATE_FORMAT(A.CRE_DTTM, '%Y%m%d') <= REPLACE(#{creDttmTwo}, '.', '')]]>
+			</if>
+			<if test='titl != null and titl != ""'>
+				AND	A.TITL LIKE CONCAT('%', #{titl}, '%')
+			</if>
+			ORDER BY A.PRP_IDX ASC
+		) Z
+		ORDER BY rownum DESC
+		LIMIT ${pageInfo.firstRecordIndex}, ${pageInfo.recordCountPerPage}
+	</select>
+	
+	<select id="selecProposeListCnt" parameterType="reqProposeVO" resultType="int" >
+		SELECT
+			COUNT(1) totalRecordCount
+		FROM
+			TBL_PRP
+		WHERE
+      		DEL_YN = 'N'
+      	<if test='creDttmOne != null and creDttmOne != ""'>	
+			AND DATE_FORMAT(CRE_DTTM, '%Y%m%d') >= REPLACE(#{creDttmOne}, '.', '')
+		</if>
+		<if test='creDttmTwo != null and creDttmTwo != ""'>	
+			<![CDATA[AND DATE_FORMAT(CRE_DTTM, '%Y%m%d') <= REPLACE(#{creDttmTwo}, '.', '')]]>
+		</if>
+		<if test='titl != null and titl != ""'>
+			AND	TITL LIKE CONCAT('%', #{titl}, '%')
+		</if>
+	</select>
+
+	<select id="selecProposeTotalCnt" resultType="int" >
+		SELECT
+			COUNT(1) totalRecordCount
+		FROM
+			TBL_PRP
+		WHERE
+      		DEL_YN = 'N'
+	</select>
+	
+	<select id="selectProposeInfo" parameterType="String" resultType="proposeMVO" >
+		SELECT
+			A.PRP_IDX			prpIdx,			<!-- 제안 인덱스	int(11) -->
+			A.MBR_IDX			mbrIdx,			<!-- 회원 인덱스	int(11) -->
+			A.TITL            	titl,			<!-- 제목		varchar(50) -->
+			A.BODY            	body,			<!-- 본문		mediumtext -->
+			A.FILE_PATH       	filePath,		<!-- 섬네일 이미지 패스	varchar(200) -->
+			A.MNGR_MBR_IDX		mngrMbrIdx,		<!-- 수정자 인덱스	int(11) -->
+			A.HIT_CNT			hitCnt,			<!-- 조회수	int(11) -->
+			A.USE_YN 			useYn,			<!-- 전시(사용)여부	varchar(1) -->
+			A.CRE_DTTM        	creDttm,		<!-- 생성일시 	datetime -->
+			A.MOD_DTTM			modDttm,		<!-- 수정일	datetime -->
+			B.CEO_NM 			ceoNm,			<!-- 등록자명(ceo명) -->
+      		B.OZTN_NM 			oztnNm			<!-- 단체명	-->
+		FROM
+			TBL_PRP A,
+			TBL_MBR B
+		WHERE
+      		A.MBR_IDX = B.MBR_IDX
+		AND	A.DEL_YN = 'N'
+		AND A.PRP_IDX = #{prpIdx}
+	</select>
+
+	<update id="updatePropose" parameterType="proposeDTO">
+		UPDATE
+			TBL_PRP
+		SET
+	<if test='delYn != null and delYn != ""'>
+			DEL_YN			=	#{delYn}, 		<!-- 삭제여부	varchar(1) -->
+	</if>
+			MNGR_MBR_IDX	=	#{mngrMbrIdx},	<!-- 수정자 인덱스	int(11) -->
+			USE_YN			=	#{useYn}		<!-- 전시(사용)여부	varchar(1) -->
+		WHERE
+			PRP_IDX = #{prpIdx}
+	</update>
+	
+</mapper>

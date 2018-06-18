@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC
+        "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN"
+        "http://tiles.apache.org/dtds/tiles-config_3_0.dtd">
+<tiles-definitions>
+
+<!-- default : 템플릿에 설정된 페이지의 구성 요소에 대한 실제 파일을 지정합니다.  -->
+<definition name="default" template="/WEB-INF/tiles/layout/default_template.jsp">
+	<put-attribute name="topMenu" value="/WEB-INF/tiles/layout/topMenu.jsp" />
+	<put-attribute name="headScript" value="/WEB-INF/tiles/layout/head_script.jsp" />
+</definition>
+
+<definition name="popup" template="/WEB-INF/tiles/layout/popup_template.jsp">
+	<put-attribute name="headScript" value="/WEB-INF/tiles/layout/head_script.jsp" />
+</definition>
+
+<definition name="popup/*" extends="popup">
+	<put-attribute name="body" value="/WEB-INF/views/{1}.jsp" />
+</definition>
+
+<definition name="popup/*/*" extends="popup">
+	<put-attribute name="body" value="/WEB-INF/views/{1}/{2}.jsp" />
+</definition>
+
+<definition name="popup/*/*/*" extends="popup">
+	<put-attribute name="body" value="/WEB-INF/views/{1}/{2}/{3}.jsp" />
+</definition>
+
+<definition name="popup/*/*/*" extends="popup">
+	<put-attribute name="body" value="/WEB-INF/views/{1}/{2}/{3}.jsp" />
+</definition>
+
+<definition name="*/proxy" extends="default">
+	<put-attribute name="sideMenu" value="/WEB-INF/tiles/layout/{1}Menu.jsp" />
+	<put-attribute name="body" value="/WEB-INF/views/main/proxy.jsp" />
+</definition>
+
+<!-- 기본관리 -->
+<definition name="basic/*/*" extends="default">
+	<put-attribute name="sideMenu" value="/WEB-INF/tiles/layout/basicMenu.jsp" />
+	<put-attribute name="body" value="/WEB-INF/views/basic/{1}/{2}.jsp" />
+</definition>
+
+<!-- 배너 -->
+<definition name="banner/*" extends="default">
+	<put-attribute name="sideMenu" value="/WEB-INF/tiles/layout/bannerMenu.jsp" />
+	<put-attribute name="body" value="/WEB-INF/views/banner/{1}.jsp" />
+</definition>
+
+<!-- 혁신활동관리 -->
+<definition name="activity/*/*" extends="default">
+	<put-attribute name="sideMenu" value="/WEB-INF/tiles/layout/activityMenu.jsp" />
+	<put-attribute name="body" value="/WEB-INF/views/activity/{1}/{2}.jsp" />
+</definition>
+
+<!-- 회원관리 -->
+<definition name="member/*" extends="default">
+	<put-attribute name="sideMenu" value="/WEB-INF/tiles/layout/memberMenu.jsp" />
+	<put-attribute name="body" value="/WEB-INF/views/member/{1}.jsp" />
+</definition>
+
+<!-- 예약일정관리 -->
+<definition name="reserve/*/*" extends="default">
+	<put-attribute name="sideMenu" value="/WEB-INF/tiles/layout/reserveMenu.jsp" />
+	<put-attribute name="body" value="/WEB-INF/views/reserve/{1}/{2}.jsp" />
+</definition>
+
+<!-- 혁신파크관리 -->
+<definition name="information/*/*" extends="default">
+	<put-attribute name="sideMenu" value="/WEB-INF/tiles/layout/informationMenu.jsp" />
+	<put-attribute name="body" value="/WEB-INF/views/information/{1}/{2}.jsp" />
+</definition>
+
+<!-- 시설 관리 -->
+<definition name="facilities/*/*" extends="default">
+	<put-attribute name="sideMenu" value="/WEB-INF/tiles/layout/facilitiesMenu.jsp" />
+	<put-attribute name="body" value="/WEB-INF/views/facilities/{1}/{2}.jsp" />
+</definition>
+
+<!-- 정산 관리 -->
+<definition name="adjust/*/*" extends="default">
+	<put-attribute name="sideMenu" value="/WEB-INF/tiles/layout/adjustMenu.jsp" />
+	<put-attribute name="body" value="/WEB-INF/views/adjust/{1}/{2}.jsp" />
+</definition>
+
+<definition name="empty/*/*" template="/WEB-INF/views/{1}/{2}.jsp" />
+<definition name="empty/*/*/*" template="/WEB-INF/views/{1}/{2}/{3}.jsp" />
+
+<!--  default를 확장하여 test 라는 URL로 시작되는 호출이 오는 경우 아래 설정에 의해서 페이지를 만들게 됩니다. -->
+<definition name="*/*" extends="default">
+	<put-attribute name="body" value="/WEB-INF/views/{1}/{2}.jsp" />
+</definition>
+
+<definition name="*/*/*" extends="default">
+	<put-attribute name="body" value="/WEB-INF/views/{1}/{2}/{3}.jsp" />
+</definition>
+</tiles-definitions>

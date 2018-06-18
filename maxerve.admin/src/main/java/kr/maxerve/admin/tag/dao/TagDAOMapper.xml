@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.maxerve.admin.tag.tagDAO">
+
+	<insert id="insertTag" parameterType="tagDTO">
+		INSERT
+			INTO
+			TBL_TAG(
+				TAG_NM,			<!-- VARCHAR(50) NOT NULL COMMENT '태그명' -->
+				TAG_CNT,    	<!-- INT(11) NOT NULL COMMENT '태그 카운트' -->
+				CRE_DTTM    	<!-- DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '등록일' -->
+			)
+		VALUES(
+			#{tagNm},
+			0,
+			now()
+		) ON
+		DUPLICATE KEY UPDATE
+			TAG_CNT = TAG_CNT
+	</insert>
+
+	<insert id="deleteTag" parameterType="tagDTO">
+		INSERT
+			INTO
+			TBL_TAG(
+				TAG_NM,			<!-- VARCHAR(50) NOT NULL COMMENT '태그명' -->
+				TAG_CNT,    	<!-- INT(11) NOT NULL COMMENT '태그 카운트' -->
+				CRE_DTTM    	<!-- DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '등록일' -->
+			)
+		VALUES(
+			#{tagNm},
+			0,
+			now()
+		) ON
+		DUPLICATE KEY UPDATE
+			TAG_CNT =(
+				CASE
+					WHEN TAG_CNT = 0 THEN VALUES(TAG_CNT)
+				ELSE (TAG_CNT-1)
+			END
+			)
+	</insert>
+
+	<insert id="insertAttachTag" parameterType="attachTagDTO">
+		INSERT
+			INTO
+			TBL_ATC_TAG(
+				TAG_LOC_CD,			<!-- VARCHAR(50) NOT NULL COMMENT '태그소재지 공통코드(010)' -->
+				TAG_LOC_IDX,    	<!-- INT(11) NOT NULL COMMENT '태그소재지 인덱스' -->
+				ORD,            	<!-- INT(11) NOT NULL COMMENT '순서' -->
+				TAG_NM          	<!-- VARCHAR(50) NOT NULL COMMENT '태그명' -->
+			)
+		VALUES(
+			#{tagLocCd},
+			#{tagLocIdx},
+			#{ord},
+			#{tagNm}
+		)
+	</insert>
+
+	<update id="updateAttachTag" parameterType="attachTagDTO">
+		UPDATE
+			TBL_ATC_TAG
+		SET
+			ORD = #{newOrd}
+		WHERE
+			TAG_LOC_CD = #{tagLocCd}
+			AND TAG_LOC_IDX = #{tagLocIdx}
+			AND ORD = #{ord}
+	</update>
+
+	<delete id="deleteAttachTag" parameterType="attachTagDTO">
+		DELETE
+		FROM
+			TBL_ATC_TAG
+		WHERE
+			TAG_LOC_CD = #{tagLocCd}
+			AND TAG_LOC_IDX = #{tagLocIdx}
+		<if test="ord != null and !ord.equals('')">
+			AND ORD = #{ord}
+		</if>
+	</delete>
+
+	<select id="selectAttachTagList" parameterType="attachTagDTO" resultType="tagDTO">
+		SELECT
+			TAG_NM			tagNm
+		FROM
+			TBL_ATC_TAG
+		WHERE
+			TAG_LOC_CD = #{tagLocCd}
+	<if test="tagLocIdx != null and !tagLocIdx.equals('')">
+		AND TAG_LOC_IDX = #{tagLocIdx}
+		ORDER BY ORD
+	</if>
+	<if test="tagLocIdx == null or tagLocIdx.equals('')">
+		GROUP
+			BY TAG_NM
+	</if>
+	</select>
+</mapper>

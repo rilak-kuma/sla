@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.maxerve.admin.banner.bannerDAO">
+
+	<insert id="insertBanner" parameterType="bannerDTO" >
+		INSERT INTO 
+			TBL_BNNR(
+						PLF_CD, 			<!-- 플랫폼 공통코드(027)	varchar(50) -->
+						BNNR_LOC_CD, 		<!-- 베너소재지 공통코드(010)	varchar(50) -->
+						BNNR_RSC_LOC_CD, 	<!-- 배너등록지 공통코드(010)	varchar(50) -->
+						BNNR_RSC_LOC_IDX, 	<!-- 배너등록지 인덱스(이미지등록시 0)	int(11) -->
+						TITL, 				<!-- 제목	varchar(50) -->
+						INFO, 				<!-- 정보	varchar(200) -->
+						FILE_PATH, 			<!-- 배너파일	varchar(200) -->
+						ORD, 				<!-- 순서	int(11) -->
+						LINK, 				<!-- 링크	varchar(200) -->
+						NEW_WND_YN, 		<!-- 새창여부	varchar(1) -->
+						USE_YN, 			<!-- 전시여부	varchar(1) -->
+						USE_SRT_DT, 		<!-- 전시시작일	varchar(10) -->
+						USE_END_DT, 		<!-- 전시종료일	varchar(10) -->
+						USE_LMT_YN	 		<!-- 기간설정 사용여부	varchar(1) -->
+			) VALUES (
+						#{plfCd},
+						#{bnnrLocCd},
+						#{bnnrRscLocCd},
+						#{bnnrRscLocIdx},
+						#{titl},
+						#{info},
+						#{filePath},
+						#{ord},
+						#{link},
+						#{newWndYn},
+						#{useYn},
+						#{useSrtDt},
+						#{useEndDt},
+						#{useLmtYn}
+					)
+	</insert>
+
+	<select id="selectBannerList" parameterType="reqBannerVO" resultType="bannerMVO" >
+		
+	SELECT *
+	FROM(	
+		SELECT
+			@rownum:=@rownum+1	rownum,
+			BNNR_IDX			bnnrIdx,
+			TITL				titl,
+			CASE USE_YN WHEN 'Y' THEN '전시' ELSE '미전시' END useYnNm,
+			USE_SRT_DT			useSrtDt,
+			USE_END_DT			useEndDt,
+			USE_LMT_YN			useLmtYn
+		FROM
+			TBL_BNNR, (select @rownum:=0) ROW
+		WHERE
+			DEL_YN = 'N'
+		AND BNNR_LOC_CD = #{bnnrLocCd}
+		<if test='plfCd != null and plfCd != ""'>
+			AND	PLF_CD = #{plfCd}
+		</if>
+		<if test='useYn != null and useYn != ""'>
+			AND	USE_YN = #{useYn}
+		</if>
+		<if test='titl != null and titl != ""'>
+			AND	TITL LIKE CONCAT('%', #{titl}, '%')
+		</if>
+		<if test='useSrtDt != null and useSrtDt != ""'>
+			<![CDATA[ AND REPLACE(USE_SRT_DT, '.', '') <= REPLACE(#{useSrtDt}, '.', '') ]]>
+		</if>
+		<if test='useEndDt != null and useEndDt != ""'>
+			AND REPLACE(USE_END_DT, '.', '') >= REPLACE(#{useEndDt}, '.', '')
+		</if>
+		ORDER BY BNNR_IDX ASC
+	) Z
+	ORDER BY rownum DESC
+	LIMIT ${pageInfo.firstRecordIndex}, ${pageInfo.recordCountPerPage}
+		
+	</select>
+	
+	<select id="selectBannerListCnt" parameterType="reqBannerVO" resultType="int" >
+		SELECT COUNT(1) totalRecordCount
+		FROM
+			TBL_BNNR
+		WHERE
+			DEL_YN = 'N'
+		AND BNNR_LOC_CD = #{bnnrLocCd}
+		<if test='plfCd != null and plfCd != ""'>
+			AND	PLF_CD = #{plfCd}
+		</if>
+		<if test='useYn != null and useYn != ""'>
+			AND	USE_YN = #{useYn}
+		</if>
+		<if test='titl != null and titl != ""'>
+			AND	TITL LIKE CONCAT('%', #{titl}, '%')
+		</if>
+		<if test='useSrtDt != null and useSrtDt != ""'>
+			AND REPLACE(USE_SRT_DT, '.', '') >= REPLACE(#{useSrtDt}, '.', '')
+		</if>
+		<if test='useEndDt != null and useEndDt != ""'>
+		<![CDATA[ AND REPLACE(USE_END_DT, '.', '') <= REPLACE(#{useEndDt}, '.', '') ]]>
+		</if>
+	</select>
+	
+	<select id="selectUseBannerList" parameterType="reqBannerVO" resultType="bannerMVO" >
+		SELECT
+			BNNR_IDX			bnnrIdx,
+			ORD					ord,
+			TITL				titl,
+			'전시중'				useYnNm,
+			USE_SRT_DT			useSrtDt,
+			USE_END_DT			useEndDt,
+			USE_LMT_YN			useLmtYn
+		FROM
+			TBL_BNNR
+		WHERE
+			BNNR_LOC_CD = #{bnnrLocCd}
+		<if test='plfCd != null and plfCd != ""'>
+			AND	PLF_CD = #{plfCd}
+		</if>
+		AND	USE_YN = 'Y'
+		AND DEL_YN = 'N'
+		AND DATE_FORMAT(now(), '%Y%m%d') BETWEEN REPLACE(USE_SRT_DT, '.', '') AND REPLACE(USE_END_DT, '.', '')
+		ORDER BY ORD ASC
+	</select>
+	
+	<select id="selectUseBannerListCnt" parameterType="reqBannerVO" resultType="bannerMVO" >
+		SELECT
+			SELECT COUNT(1) totalRecordCount
+		FROM
+			TBL_BNNR
+		WHERE
+			BNNR_LOC_CD = #{bnnrLocCd}
+		<if test='plfCd != null and plfCd != ""'>
+			AND	PLF_CD = #{plfCd}
+		</if>
+		AND	USE_YN = 'Y'
+		AND DATE_FORMAT(now(), '%Y%m%d') BETWEEN REPLACE(USE_SRT_DT, '.', '') AND REPLACE(USE_END_DT, '.', '')
+	</select>
+	
+	<select id="selectBannerInfo" parameterType="String" resultType="bannerMVO">
+		SELECT
+			BNNR_IDX			bnnrIdx,
+			PLF_CD				plfCd,
+			BNNR_LOC_CD			bnnrLocCd,
+			BNNR_RSC_LOC_CD		bnnrRscLocCd,
+			BNNR_RSC_LOC_IDX	bnnrRscLocIdx,
+			TITL				titl,
+			INFO				info,
+			FILE_PATH			filePath,
+			ORD					ord,
+			LINK				link,
+			NEW_WND_YN			newWndYn,
+			USE_YN				useYn,
+			USE_SRT_DT			useSrtDt,
+			USE_END_DT			useEndDt,
+			USE_LMT_YN			useLmtYn,
+			DEL_YN				delYn,
+			CRE_DTTM			creDttm,
+			MOD_DTTM			modDttm
+		FROM
+			TBL_BNNR
+		WHERE
+			BNNR_IDX = #{bnnrIdx}
+	</select>
+	
+	<select id="selectOrdList" parameterType="reqBannerVO" resultType="bannerMVO" >
+		SELECT	A.CMMN_CD plfCd,
+				COALESCE(B.maxOrd,0)+1 ord,
+				A.CMMN_CD_NM plfCdNm
+		FROM
+		    (
+			    SELECT
+			      CMMN_CD,
+			      CMMN_CD_NM
+			    FROM
+			      TBL_CMMN_CD
+			    WHERE
+			      DEP1 = ${dep1}
+		    ) A
+		LEFT OUTER JOIN
+		    (
+			    SELECT
+				    PLF_CD,
+					 COUNT(BNNR_IDX)	maxOrd
+				FROM
+					TBL_BNNR
+				WHERE
+					DEL_YN = 'N'
+				AND BNNR_LOC_CD = ${bnnrLocCd}
+				GROUP BY PLF_CD
+		    ) B
+		ON A.CMMN_CD = B.PLF_CD
+		ORDER BY CMMN_CD ASC
+	</select>
+	
+	<update id="updateBanner" parameterType="bannerDTO" >
+		UPDATE
+			TBL_BNNR
+		SET
+			PLF_CD				=	#{plfCd},
+			BNNR_LOC_CD			=	#{bnnrLocCd},
+			BNNR_RSC_LOC_CD		=	#{bnnrRscLocCd},
+			BNNR_RSC_LOC_IDX	=	#{bnnrRscLocIdx},
+			TITL				=	#{titl},
+			INFO				=	#{info},
+			FILE_PATH			=	#{filePath},
+			ORD					=	#{ord},
+			LINK				=	#{link},
+			NEW_WND_YN			=	#{newWndYn},
+			USE_YN				=	#{useYn},
+			USE_SRT_DT			=	#{useSrtDt},
+			USE_END_DT			=	#{useEndDt},
+			USE_LMT_YN			=	#{useLmtYn}
+		WHERE
+			BNNR_IDX = #{bnnrIdx}
+	</update>
+
+	<update id="deleteBanner" parameterType="String" >
+		UPDATE
+			TBL_BNNR
+		SET
+			USE_YN				=	'N',
+			DEL_YN				=	'Y'
+		WHERE
+			BNNR_IDX = #{bnnrIdx}
+	</update>
+</mapper>

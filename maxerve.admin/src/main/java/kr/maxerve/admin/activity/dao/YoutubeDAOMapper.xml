@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.maxerve.admin.activity.YoutubeDAO">
+	
+	<select id="selectYutbList" parameterType="string" resultType="referenceRoomYoutubeDTO">
+		SELECT
+			REF_ROOM_IDX	refRoomIdx,		<!-- 자료실 인덱스	int(11) -->
+			YUTB_URL		yutbUrl,		<!-- 유튜브 주소	varchar(200) -->
+			ORD				ord				<!-- 순서	int(11) -->
+		FROM
+			TBL_REF_ROOM_YUTB
+		WHERE
+			REF_ROOM_IDX = #{refRoomIdx}
+		ORDER BY ORD ASC
+	</select>
+	
+</mapper>

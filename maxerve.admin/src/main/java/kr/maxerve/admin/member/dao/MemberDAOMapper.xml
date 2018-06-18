@@ -1,0 +1,648 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.maxerve.admin.member.memberDAO">
+
+	<!-- 입주중 단체 목록 -->
+	<select id="selectMoveinList" parameterType="reqMoveInOztnVO" resultType="moveInOztnMVO">
+		SELECT
+		    B.CMMN_CD_NM			mvinGrpCdNm,	<!-- 입주그룹명 -->
+		    COUNT(A.MVIN_GRP_CD)	grpCnt,			<!-- 입주단체수 -->
+		    SUM(A.FTE_PSCT)			ftePsct			<!-- 입주단체 상근인원 합 -->
+		FROM
+		  	TBL_MVIN_APLY A, TBL_CMMN_CD B
+		WHERE A.MVIN_GRP_CD = B.CMMN_CD
+		AND APLY_PGR_CD = #{aplyPgrCd}
+		AND DATE_FORMAT(now(), '%Y%m%d') BETWEEN REPLACE(MVIN_SRT_DT, '.', '') AND REPLACE(MVIN_END_DT, '.', '')
+		GROUP BY MVIN_GRP_CD
+	</select>
+
+	<!-- 입주중 단체 상근인원 수 목록 -->
+	<select id="selectExpirationList" parameterType="reqMoveInOztnVO" resultType="moveInOztnMVO">
+		SELECT
+		    B.CMMN_CD_NM 			mvinGrpCdNm,<!-- 입주신청 인덱스 -->
+		    COUNT(A.MVIN_GRP_CD) 	grpCnt,		<!-- 입주단체수 -->
+		    SUM(A.FTE_PSCT)			ftePsct		<!-- 입주단체 상근인원 합 -->
+		FROM
+		  	TBL_MVIN_APLY A, TBL_CMMN_CD B
+		WHERE A.MVIN_GRP_CD = B.CMMN_CD
+		AND APLY_PGR_CD = #{aplyPgrCd}
+		AND DATE_FORMAT(now(), '%Y%m%d') NOT BETWEEN REPLACE(MVIN_SRT_DT, '.', '') AND REPLACE(MVIN_END_DT, '.', '')
+		GROUP BY MVIN_GRP_CD
+	</select>
+
+	<!-- 입주단체 전체 조회 목록 -->
+	<select id="selectMoveInOztnList" parameterType="reqMoveInOztnVO" resultType="moveInOztnMVO">
+		SELECT
+			A.MVIN_APLY_IDX		mvinAplyIdx,				<!-- 입주신청 인덱스 -->
+		    A.OZTN_NM 			oztnNm,						<!-- 단체명 -->
+		    A.CEO_NM 			ceoNm,						<!-- 대표자명 -->
+		    A.CEO_PHN 			ceoPhn,						<!-- 대표자 휴대전화 -->
+		    A.CEO_EMIL,
+		    FNC_CMMN_CD_NM(A.OZTN_TYP_CD)	oztnTypCdNm, 	<!-- 단체형태 -->
+		    A.MVIN_SRT_DT 		mvinSrtDt,					<!-- 입주기간 시작일 -->
+<![CDATA[   CASE WHEN DATE_FORMAT(now(), '%Y%m%d') < REPLACE(A.MVIN_END_DT, '.', '') THEN '입주중' ELSE '기한만료' END	aplyPgrCdNm, ]]>	<!-- 입주상태&&입주신청상태 -->
+        	CASE WHEN B.MBR_ID IS NOT NULL THEN '가입' ELSE '미가입' END	onlineMb,	<!-- 온라인멤버 -->
+        	FNC_CMMN_CD_NM(A.MVIN_GRP_CD)	mvinGrpCdNm,	<!-- 입주그룹명 -->
+        	A.MVIN_SRT_DT 			mvinSrtDt				<!-- 입주일 -->
+		FROM
+		  	TBL_MVIN_APLY A
+    	LEFT OUTER JOIN
+    		TBL_MBR B
+    	ON	A.CEO_EMIL = B.MBR_ID
+    	AND B.MBR_TYP_CD = #{mbrTypCd}
+		WHERE
+			A.APLY_PGR_CD = #{aplyPgrCd}
+		AND DATE_FORMAT(now(), '%Y%m%d') > REPLACE(A.MVIN_SRT_DT, '.', '')
+		<if test='oztnNm != null and oztnNm != ""'>
+			AND A.OZTN_NM LIKE CONCAT('%', #{oztnNm}, '%')
+		</if>
+		<if test='mvinYn == "Y"'>
+			AND DATE_FORMAT(now(), '%Y%m%d') BETWEEN REPLACE(A.MVIN_SRT_DT, '.', '') AND REPLACE(A.MVIN_END_DT, '.', '')
+		</if>
+		<if test='mvinYn == "N"'>
+			AND DATE_FORMAT(now(), '%Y%m%d') >= REPLACE(A.MVIN_END_DT, '.', '')
+		</if>
+		<if test='mvinSrtDtOne != null and mvinSrtDtOne != ""'>
+			AND REPLACE(A.MVIN_SRT_DT, '.', '') >= REPLACE(#{mvinSrtDtOne}, '.', '')
+		</if>
+		<if test='mvinSrtDtTwo != null and mvinSrtDtTwo != ""'>
+			<![CDATA[ AND REPLACE(A.MVIN_SRT_DT, '.', '') <= REPLACE(#{mvinSrtDtTwo}, '.', '') ]]>
+		</if>
+		<if test='onlineMb == "Y"'>
+			AND B.MBR_ID IS NOT NULL
+		</if>
+		<if test='mvinGrpCd != null and mvinGrpCd != ""'>
+			AND A.MVIN_GRP_CD = #{mvinGrpCd}
+		</if>
+		ORDER BY
+		<if test="sortType == 'sortOne_1'">
+				A.OZTN_TYP_CD ASC,
+		</if>
+		<if test="sortType == 'sortOne_2'">
+				A.OZTN_TYP_CD DESC,
+		</if>
+		<if test="sortType == 'sortTwo_1'">
+				A.MVIN_SRT_DT ASC,
+		</if>
+		<if test="sortType == 'sortTwo_2'">
+				A.MVIN_SRT_DT DESC,
+		</if>
+		<if test="sortType == 'sortThree_1'">
+				aplyPgrCdNm ASC,
+		</if>
+		<if test="sortType == 'sortThree_2'">
+				aplyPgrCdNm DESC,
+		</if>
+		<if test="sortType == 'sortFour_1'">
+				onlineMb DESC,
+		</if>
+		<if test="sortType == 'sortFour_2'">
+				onlineMb ASC,
+		</if>
+				A.OZTN_NM ASC
+		LIMIT ${pageInfo.firstRecordIndex}, ${pageInfo.recordCountPerPage}
+	</select>
+
+	<!-- 입주단체 전체 조회 목록 엑셀다운로드 -->
+	<select id="selectMoveInOztnListExcel" parameterType="reqMoveInOztnVO" resultType="moveInOztnMVO">
+		SELECT
+			A.MVIN_APLY_IDX		mvinAplyIdx,				<!-- 입주신청 인덱스 -->
+		    A.OZTN_NM 			oztnNm,						<!-- 단체명 -->
+		    A.CEO_NM 			ceoNm,						<!-- 대표자명 -->
+		    A.CEO_PHN 			ceoPhn,						<!-- 대표자 휴대전화 -->
+		    A.CEO_EMIL,
+		    FNC_CMMN_CD_NM(A.OZTN_TYP_CD)	oztnTypCdNm, 	<!-- 단체형태 -->
+		    A.MVIN_SRT_DT 		mvinSrtDt,					<!-- 입주기간 시작일 -->
+<![CDATA[   CASE WHEN DATE_FORMAT(now(), '%Y%m%d') < REPLACE(A.MVIN_END_DT, '.', '') THEN '입주중' ELSE '기한만료' END	aplyPgrCdNm, ]]>	<!-- 입주상태&&입주신청상태 -->
+        	CASE WHEN B.MBR_ID IS NOT NULL THEN '가입' ELSE '미가입' END	onlineMb,	<!-- 온라인멤버 -->
+        	FNC_CMMN_CD_NM(A.MVIN_GRP_CD)	mvinGrpCdNm,	<!-- 입주그룹명 -->
+        	A.MVIN_SRT_DT 			mvinSrtDt				<!-- 입주일 -->
+		FROM
+		  	TBL_MVIN_APLY A
+    	LEFT OUTER JOIN
+    		TBL_MBR B
+    	ON	A.CEO_EMIL = B.MBR_ID
+    	AND B.MBR_TYP_CD = #{mbrTypCd}
+		WHERE
+			A.APLY_PGR_CD = #{aplyPgrCd}
+		AND DATE_FORMAT(now(), '%Y%m%d') > REPLACE(A.MVIN_SRT_DT, '.', '')
+		<if test='oztnNm != null and oztnNm != ""'>
+			AND A.OZTN_NM LIKE CONCAT('%', #{oztnNm}, '%')
+		</if>
+		<if test='mvinYn == "Y"'>
+			AND DATE_FORMAT(now(), '%Y%m%d') BETWEEN REPLACE(A.MVIN_SRT_DT, '.', '') AND REPLACE(A.MVIN_END_DT, '.', '')
+		</if>
+		<if test='mvinYn == "N"'>
+			AND DATE_FORMAT(now(), '%Y%m%d') >= REPLACE(A.MVIN_END_DT, '.', '')
+		</if>
+		<if test='mvinSrtDtOne != null and mvinSrtDtOne != ""'>
+			AND REPLACE(A.MVIN_SRT_DT, '.', '') >= REPLACE(#{mvinSrtDtOne}, '.', '')
+		</if>
+		<if test='mvinSrtDtTwo != null and mvinSrtDtTwo != ""'>
+			<![CDATA[ AND REPLACE(A.MVIN_SRT_DT, '.', '') <= REPLACE(#{mvinSrtDtTwo}, '.', '') ]]>
+		</if>
+		<if test='onlineMb == "Y"'>
+			AND B.MBR_ID IS NOT NULL
+		</if>
+		<if test='mvinGrpCd != null and mvinGrpCd != ""'>
+			AND A.MVIN_GRP_CD = #{mvinGrpCd}
+		</if>
+	</select>
+
+	<!-- 입주단체 전체 조회 목록 수 -->
+	<select id="selectMoveInOztnListCnt" parameterType="moveInOztnMVO" resultType="int">
+		SELECT
+			COUNT(1) listCnt
+		FROM
+		  	TBL_MVIN_APLY A
+    	LEFT OUTER JOIN
+    		TBL_MBR B
+    	ON	A.CEO_EMIL = B.MBR_ID
+		WHERE
+			A.APLY_PGR_CD = #{aplyPgrCd}
+		<if test='oztnNm != null and oztnNm != ""'>
+			AND A.OZTN_NM LIKE CONCAT('%', #{oztnNm}, '%')
+		</if>
+		<if test='mvinYn == "Y"'>
+			AND DATE_FORMAT(now(), '%Y%m%d') BETWEEN REPLACE(A.MVIN_SRT_DT, '.', '') AND REPLACE(A.MVIN_END_DT, '.', '')
+		</if>
+		<if test='mvinYn == "N"'>
+			AND DATE_FORMAT(now(), '%Y%m%d') >= REPLACE(A.MVIN_END_DT, '.', '')
+		</if>
+		<if test='mvinSrtDtOne != null and mvinSrtDtOne != ""'>
+			AND REPLACE(A.MVIN_SRT_DT, '.', '') >= REPLACE(#{mvinSrtDtOne}, '.', '')
+		</if>
+		<if test='mvinSrtDtTwo != null and mvinSrtDtTwo != ""'>
+			<![CDATA[ AND REPLACE(A.MVIN_SRT_DT, '.', '') <= REPLACE(#{mvinSrtDtTwo}, '.', '') ]]>
+		</if>
+		<if test='onlineMb == "Y"'>
+			AND B.MBR_ID IS NOT NULL
+		</if>
+		<if test='mvinGrpCd != null and mvinGrpCd != ""'>
+			AND A.MVIN_GRP_CD = #{mvinGrpCd}
+		</if>
+	</select>
+
+	<!-- 입주단체 상세 -->
+	<select id="selectMoveInOztnInfo" parameterType="reqMoveInOztnVO" resultType="moveInOztnMVO">
+		SELECT
+			A.MVIN_APLY_IDX,	<!--입주신청 인덱스-->
+			A.OZTN_NM,			<!--단체명-->
+			A.OZTN_TYP_CD,		<!--단체 형태 공통코드(014)-->
+			A.OZTN_TYP_ETC,	    <!--단체형태 기타-->
+			A.SVC_ACT,			<!--주요활동(서비스)-->
+			A.CEO_NM,			<!--대표자명-->
+			A.CEO_PHN,			<!--대표자 휴대전화-->
+			A.CEO_EMIL,	    <!--대표자 이메일-->
+			A.CRN,			<!--사업자등록번호-->
+			A.EST_DT,			<!--설립일-->
+			A.OZTN_ADDR,	    <!--단체주소-->
+			A.HPG,			<!--홈페이지-->
+		 	A.OFC_PHN,			<!--사무실 전화-->
+			A.OFC_FAX,			<!--사무실 팩스-->
+			A.MNGR_NM,			<!--담당자명-->
+			A.MNGR_PHN,	    <!--담당자전화-->
+			A.MNGR_EMIL,	    <!--담당자 이메일-->
+			A.FTE_PSCT,	    <!--상근인원-->
+			A.MAIN_ACT,	    <!--주요활동/연혁-->
+			A.APLY_NM,			<!--신청인명-->
+			A.OZTN_ITDC,	    <!--단체소개-->
+			A.SCL_INV,			<!--사회혁신-->
+			A.SCL_ISU,			<!--사회문제-->
+			A.ISU_IDEA,	    <!--문제해결 아이디어-->
+			A.EPCT_EFT,	    <!--기대효과-->
+			A.OZTN_CCPC,	    <!--핵심역량-->
+			A.BSS_PLAN,	    <!--사업계획-->
+			A.CPR_PLAN,	    <!--협업계획-->
+			A.CMMN_RSC,	    <!--공유자원-->
+			A.MVIN_SRT_DT,		<!--입주기간 시작일-->
+			A.MVIN_END_DT,		<!--입주기간 종료일-->
+			A.MVIN_PLC,	    <!--입주장소-->
+<![CDATA[   CASE WHEN DATE_FORMAT(now(), '%Y%m%d') < REPLACE(A.MVIN_END_DT, '.', '') THEN '입주중' ELSE '기한만료' END	APLY_PGR_CD_NM, ]]>	<!-- 입주상태&&입주신청상태 -->
+			A.MNGR_CMMT,
+			A.APLY_PGR_CD,					<!--입주신청상태코드(022)-->
+			A.MVIN_GRP_CD,					<!--입주그룹 공통코드(025)-->
+			A.CRE_DTTM,					<!--생성일시-->
+			CASE WHEN B.MBR_ID IS NOT NULL THEN '가입' ELSE '미가입' END	ONLINE_MB <!--온라인멤버-->
+		FROM
+			TBL_MVIN_APLY A
+		LEFT OUTER JOIN
+    		TBL_MBR B
+    	ON	A.CEO_EMIL = B.MBR_ID
+    	AND B.MBR_TYP_CD = #{mbrTypCd}
+		WHERE
+			A.MVIN_APLY_IDX	= #{mvinAplyIdx}	<!--입주신청 인덱스-->
+
+	</select>
+
+	<!-- 입주단체 상세 수정 -->
+	<update id="updateMoveInOztnInfo" parameterType="moveInApplyDTO">
+		UPDATE
+			TBL_MVIN_APLY
+		SET
+			OZTN_TYP_CD		= #{oztnTypCd},		<!--단체 형태 공통코드(014)-->
+			OZTN_TYP_ETC	= #{oztnTypEtc},	<!--단체형태 기타-->
+			SVC_ACT			= #{svcAct},		<!--주요활동(서비스)-->
+			CEO_EMIL		= #{ceoEmil},	    <!--대표자 이메일-->
+			OZTN_ADDR		= #{oztnAddr},	    <!--단체주소-->
+			HPG				= #{hpg},		    <!--홈페이지-->
+		 	OFC_PHN			= #{ofcPhn},		<!--사무실 전화-->
+			OFC_FAX			= #{ofcFax},		<!--사무실 팩스-->
+			MNGR_NM			= #{mngrNm},		<!--담당자명-->
+			MNGR_PHN		= #{mngrPhn},	    <!--담당자전화-->
+			MNGR_EMIL		= #{mngrEmil},	    <!--담당자 이메일-->
+			FTE_PSCT		= #{ftePsct},	    <!--상근인원-->
+			MVIN_SRT_DT		= #{mvinSrtDt},	    <!--입주기간 시작일-->
+			MVIN_END_DT		= #{mvinEndDt},	    <!--입주기간 종료일-->
+			MVIN_PLC		= #{mvinPlc},	    <!--입주장소-->
+			MNGR_CMMT		= #{mngrCmmt}
+		WHERE
+			MVIN_APLY_IDX	= #{mvinAplyIdx}	<!--입주신청 인덱스-->
+		</update>
+
+
+	<!-- 멤버 채널 목록 -->
+	<select id="selectMblCnlList" parameterType="String" resultType="memberChannelMVO">
+		SELECT
+			MBR_IDX			mbrIdx,						<!-- 회원인덱스 -->
+			FNC_CMMN_CD_NM(CNL_TYP_CD)		cnlTypCdNm,	<!-- 채널구분명 공통코드(017) -->
+			CNL_URL			cnlUrl						<!-- 채널주소 -->
+		FROM
+			TBL_MBR_CNL
+		WHERE
+			MBR_IDX = #{mbrIdx}
+	</select>
+
+	<!-- 멤버 업종 목록 -->
+	<select id="selectMblCtgrList" parameterType="String" resultType="memberMVO">
+		SELECT
+			MBR_IDX						mbrIdx,			<!-- 회원인덱스 -->
+			(SELECT CTGR_NM FROM TBL_CTGR B WHERE B.CTGR_IDX = A.CTGR_IDX)	mbrCtgrCdNm		<!--업종공통코드-->
+		FROM
+			TBL_MBR_CTGR A
+		WHERE
+			MBR_IDX = #{mbrIdx}
+	</select>
+
+	<!-- 입주중 단체 목록 팝업 -->
+	<select id="selectmoveInOztnPopUpList" parameterType="reqMoveInOztnVO" resultType="memberMVO">
+		SELECT
+			A.MVIN_APLY_IDX,	<!-- 입주신청 인덱스 -->
+		    A.OZTN_NM,			<!-- 단체명 -->
+		    A.CEO_NM,			<!-- 대표자명 -->
+		    B.BLOG				<!-- 블로그 -->
+		FROM
+		  	TBL_MVIN_APLY A
+    	LEFT OUTER JOIN
+    		TBL_MBR B
+    	ON	A.CEO_EMIL = B.MBR_ID
+    	AND B.MBR_TYP_CD = #{mbrTypCd}
+		WHERE
+			A.APLY_PGR_CD = #{aplyPgrCd}
+		AND DATE_FORMAT(now(), '%Y%m%d') BETWEEN REPLACE(A.MVIN_SRT_DT, '.', '') AND REPLACE(A.MVIN_END_DT, '.', '')
+		AND A.OZTN_NM LIKE CONCAT('%', #{oztnNm}, '%')
+		ORDER BY A.OZTN_NM ASC
+	</select>
+
+	<!-- 입주신청 업종 목록 -->
+	<select id="selectMoveInApplyCtgrList" parameterType="String" resultType="moveInApplyCtgrDTO">
+		SELECT
+			MVIN_APLY_IDX	mvinAplyIdx,	<!--입주신청 인덱스-->
+			CTGR_IDX		ctgrIdx		<!--업종공통코드-->
+		FROM
+			TBL_MVIN_APLY_CTGR
+		WHERE
+			MVIN_APLY_IDX = #{mvinAplyIdx}
+	</select>
+
+	<!-- 입주신청 업종 삭제 -->
+	<delete id="deleteMoveInApplyCtgr" parameterType="moveInApplyCtgrDTO">
+		DELETE
+		FROM
+			TBL_MVIN_APLY_CTGR
+		WHERE
+			MVIN_APLY_IDX = #{mvinAplyIdx}
+	</delete>
+
+	<!-- 입주신청 업종 등록 -->
+	<insert id="insertMoveInApplyCtgr" parameterType="moveInApplyCtgrDTO">
+		INSERT
+		INTO
+			TBL_MVIN_APLY_CTGR
+							(
+							MVIN_APLY_IDX,	<!--입주신청 인덱스-->
+							CTGR_IDX		<!--업종공통코드 -->
+							)
+					VALUES
+							(
+							#{mvinAplyIdx},
+							#{ctgrIdx}
+							)
+	</insert>
+
+	<!-- 신규 입주 신청 목록 -->
+	<select id="selectNewMoveInAplyList" parameterType="reqMoveInOztnVO" resultType="moveInOztnMVO">
+		SELECT
+			MVIN_APLY_IDX		mvinAplyIdx,				<!-- 입주신청 인덱스 -->
+			OZTN_NM 			oztnNm,						<!-- 단체명 -->
+			CEO_NM 				ceoNm,						<!-- 대표자명 -->
+			CEO_PHN 			ceoPhn,						<!-- 대표자 휴대전화 -->
+			FNC_CMMN_CD_NM(OZTN_TYP_CD)		oztnTypCdNm, 	<!-- 단체형태 -->
+			MVIN_SRT_DT 		mvinSrtDt,					<!-- 입주기간 시작일 -->
+			FNC_CMMN_CD_NM(APLY_PGR_CD)		aplyPgrCdNm, 	<!-- 입주신청상태 -->
+			FNC_CMMN_CD_NM(MVIN_GRP_CD)		mvinGrpCdNm,	<!-- 입주그룹명 -->
+			DATE_FORMAT(CRE_DTTM, '%Y.%m.%d')	creDttm		<!-- 입주일 -->
+		FROM
+		  	TBL_MVIN_APLY
+		WHERE
+			(
+					APLY_PGR_CD != '022003'
+				OR
+				(
+					APLY_PGR_CD = '022003'
+				AND	<![CDATA[DATE_FORMAT(now(), '%Y%m%d') <= REPLACE(MVIN_SRT_DT, '.', '')]]>
+				)
+			)
+		<if test='aplyPgrCd != null and aplyPgrCd != ""'>
+			AND APLY_PGR_CD = #{aplyPgrCd}
+		</if>
+		<if test='oztnNm != null and oztnNm != ""'>
+			AND OZTN_NM LIKE CONCAT('%', #{oztnNm}, '%')
+		</if>
+		<if test='creDttmOne != null and creDttmOne != ""'>
+			AND DATE_FORMAT(CRE_DTTM, '%Y%m%d') >= REPLACE(#{creDttmOne}, '.', '')
+		</if>
+		<if test='creDttmTwo != null and creDttmTwo != ""'>
+			<![CDATA[ AND DATE_FORMAT(CRE_DTTM, '%Y%m%d') <= REPLACE(#{creDttmTwo}, '.', '') ]]>
+		</if>
+		ORDER BY
+		<if test="sortType == 'sortOne_1'">
+			 	OZTN_TYP_CD ASC,
+		</if>
+		<if test="sortType == 'sortOne_2'">
+				OZTN_TYP_CD DESC,
+		</if>
+		<if test="sortType == 'sortTwo_1'">
+				CRE_DTTM DESC,
+		</if>
+		<if test="sortType == 'sortTwo_2'">
+				CRE_DTTM ASC,
+		</if>
+		<if test="sortType == 'sortThree_1'">
+				APLY_PGR_CD ASC,
+		</if>
+		<if test="sortType == 'sortThree_2'">
+				APLY_PGR_CD DESC,
+		</if>
+				OZTN_NM ASC
+		LIMIT ${pageInfo.firstRecordIndex}, ${pageInfo.recordCountPerPage}
+	</select>
+
+	<!-- 신규 입주 신청 목록 수 -->
+	<select id="selectNewMoveInAplyListCnt" parameterType="moveInOztnMVO" resultType="int">
+		SELECT
+			COUNT(1) listCnt
+		FROM
+		  	TBL_MVIN_APLY
+		WHERE
+			(
+					APLY_PGR_CD != '022003'
+				OR
+				(
+					APLY_PGR_CD = '022003'
+				AND	<![CDATA[DATE_FORMAT(now(), '%Y%m%d') <= REPLACE(MVIN_SRT_DT, '.', '')]]>
+				)
+			)
+		<if test='aplyPgrCd != null and aplyPgrCd != ""'>
+			AND APLY_PGR_CD = #{aplyPgrCd}
+		</if>
+		<if test='oztnNm != null and oztnNm != ""'>
+			AND OZTN_NM LIKE CONCAT('%', #{oztnNm}, '%')
+		</if>
+		<if test='creDttmOne != null and creDttmOne != ""'>
+			AND DATE_FORMAT(CRE_DTTM, '%Y%m%d') >= REPLACE(#{creDttmOne}, '.', '')
+		</if>
+		<if test='creDttmTwo != null and creDttmTwo != ""'>
+			<![CDATA[ AND DATE_FORMAT(CRE_DTTM, '%Y%m%d') <= REPLACE(#{creDttmTwo}, '.', '') ]]>
+		</if>
+	</select>
+
+	<!-- 신규 입주 신청 수정-->
+	<update id="updateNewMoveInAply" parameterType="moveInApplyDTO">
+		UPDATE
+			TBL_MVIN_APLY
+		SET
+			MVIN_SRT_DT	= #{mvinSrtDt},		<!-- 입주기간 시작일 -->
+			MVIN_END_DT	= #{mvinEndDt},		<!-- 입주기간 종료일 -->
+			MVIN_PLC	= #{mvinPlc},		<!-- 입주장소 -->
+			APLY_PGR_CD	= #{aplyPgrCd},		<!-- 입주신청상태 공통코드(022) -->
+			MNGR_CMMT = #{mngrCmmt}
+		WHERE
+			MVIN_APLY_IDX	= #{mvinAplyIdx}	<!--입주신청 인덱스-->
+	</update>
+
+	<!-- 신규 입주 신청 상세 수정-->
+	<update id="updateNewMoveInOztnInfo" parameterType="moveInApplyDTO">
+		UPDATE
+			TBL_MVIN_APLY
+		SET
+			OZTN_TYP_CD		= #{oztnTypCd},		<!--단체 형태 공통코드(014)-->
+			OZTN_TYP_ETC	= #{oztnTypEtc},	<!--단체형태 기타-->
+			MVIN_GRP_CD		= #{mvinGrpCd},		<!-- 입주그룹 공통코드(025) -->
+			SVC_ACT			= #{svcAct},		<!--주요활동(서비스)-->
+			CEO_EMIL		= #{ceoEmil},	    <!--대표자 이메일-->
+			OZTN_ADDR		= #{oztnAddr},	    <!--단체주소-->
+			HPG				= #{hpg},		    <!--홈페이지-->
+		 	OFC_PHN			= #{ofcPhn},		<!--사무실 전화-->
+			OFC_FAX			= #{ofcFax},		<!--사무실 팩스-->
+			MNGR_NM			= #{mngrNm},		<!--담당자명-->
+			MNGR_PHN		= #{mngrPhn},	    <!--담당자전화-->
+			MNGR_EMIL		= #{mngrEmil},	    <!--담당자 이메일-->
+			FTE_PSCT		= #{ftePsct}	    <!--상근인원-->
+		WHERE
+			MVIN_APLY_IDX	= #{mvinAplyIdx}	<!--입주신청 인덱스-->
+	</update>
+
+	<!-- 온라인 멤버 현황 -->
+	<select id="selectOnlineMemberState" resultType="memberMVO">
+		SELECT
+			(SELECT COUNT(1) FROM TBL_MBR B WHERE B.WDW_YN = 'N') olineAllMbrCnt,
+			FNC_CMMN_CD_NM(A.MBR_TYP_CD)	mbrTypCdNm,
+		  	(SELECT COALESCE(SUM(FTE_PSCT),0) FROM TBL_MVIN_APLY B WHERE B.CEO_EMIL = A.MBR_ID AND A.MBR_TYP_CD = '015001') invrMbrCnt,
+		  	COALESCE(COUNT(1),0) mbrTypeCnt
+		FROM
+			TBL_MBR A
+		WHERE
+			A.WDW_YN = 'N'
+		GROUP BY A.MBR_TYP_CD
+	</select>
+
+	<!-- 온라인 멤버 입주 현황 -->
+	<select id="selectOnlineMvinMbState" parameterType="reqMemberVO" resultType="memberMVO">
+		SELECT  D.CMMN_CD_NM mvinGrpCdNm,
+		        COALESCE(C.grpCnt,0) grpCnt,
+		        COALESCE(C.ftePsct,0) ftePsct
+		FROM
+		    (
+		      SELECT
+		          CMMN_CD,
+		          CMMN_CD_NM
+		      FROM
+		          TBL_CMMN_CD
+		      WHERE
+		          DEP1 = #{depOne}
+		    ) D
+		    LEFT OUTER JOIN
+		    (
+		      SELECT
+			        B.MVIN_GRP_CD,
+			      	FNC_CMMN_CD_NM(B.MVIN_GRP_CD),
+			        SUM(B.FTE_PSCT) ftePsct,
+			        COUNT(1) grpCnt
+		      FROM
+					TBL_MBR A,
+					TBL_MVIN_APLY B
+		      WHERE
+		      	    A.WDW_YN = 'N'
+		      AND   A.CEO_NM = B.CEO_NM
+		      AND   A.MBR_TYP_CD = #{mbrTypCd}
+		      GROUP BY B.MVIN_GRP_CD
+		    )C
+		ON    D.CMMN_CD = C.MVIN_GRP_CD
+	</select>
+
+	<!-- 온라인 멤버 목록 -->
+	<select id="selectOnlineMemberList" parameterType="reqMemberVO" resultType="memberMVO">
+		SELECT
+			TB1.MBR_IDX						mbrIdx,			<!-- 회원 인덱스 -->
+			TB1.MBR_ID						mbrId,			<!-- 회원 아이디 -->
+			FNC_CMMN_CD_NM(MBR_TYP_CD)	mbrTypCdNm,		<!-- 혁신멤버 구분명 공통코드(015) -->
+			TB1.OZTN_NM						oztnNm,			<!-- 단체명 -->
+			TB1.CEO_NM						ceoNm,			<!-- 대표자명 -->
+			TB1.CEO_PHN						ceoPhn,			<!-- 대표휴대전화 -->
+			DATE_FORMAT(TB1.CRE_DTTM, '%Y-%m-%d') creDttm,	<!-- 가입일시 -->
+			CASE MVIN_GRP_CD WHEN '' THEN '-' ELSE FNC_CMMN_CD_NM(TB2.MVIN_GRP_CD) END mvinGrpCdNm	<!-- 입주그룹명 -->
+		FROM
+			TBL_MBR TB1
+		LEFT OUTER JOIN
+			(
+				SELECT
+					CEO_EMIL,
+					MVIN_GRP_CD
+				FROM
+					TBL_MVIN_APLY
+				WHERE
+					APLY_PGR_CD = #{aplyPgrCd}
+				AND DATE_FORMAT(now(), '%Y%m%d') BETWEEN REPLACE(MVIN_SRT_DT, '.', '') AND REPLACE(MVIN_END_DT, '.', '')
+			)  TB2
+		ON	TB1.MBR_ID = TB2.CEO_EMIL
+		WHERE
+			WDW_YN = 'N'
+		<if test='oztnNm != null and oztnNm != ""'>
+			AND OZTN_NM LIKE CONCAT('%', #{oztnNm}, '%')
+		</if>
+		<if test='mbrTypCd != null and mbrTypCd != ""'>
+			AND MBR_TYP_CD = #{mbrTypCd}
+		</if>
+		<if test='mvinGrpCd != null and mvinGrpCd != ""'>
+			AND MVIN_GRP_CD = #{mvinGrpCd}
+		</if>
+		<if test='creDttmOne != null and creDttmOne != ""'>
+			AND DATE_FORMAT(CRE_DTTM, '%Y%m%d') >= REPLACE(#{creDttmOne}, '.', '')
+		</if>
+		<if test='creDttmTwo != null and creDttmTwo != ""'>
+			AND DATE_FORMAT(CRE_DTTM, '%Y%m%d') <![CDATA[  <=  ]]> REPLACE(#{creDttmTwo}, '.', '')
+		</if>
+		ORDER BY
+		<if test="sortType == 'sortOne_1'">
+				MBR_TYP_CD ASC,
+		</if>
+		<if test="sortType == 'sortOne_2'">
+				MBR_TYP_CD DESC,
+		</if>
+		<if test="sortType == 'sortTwo_1'">
+				CRE_DTTM DESC,
+		</if>
+		<if test="sortType == 'sortTwo_2'">
+				CRE_DTTM ASC,
+		</if>
+				MBR_ID ASC
+		LIMIT ${pageInfo.firstRecordIndex}, ${pageInfo.recordCountPerPage}
+	</select>
+
+	<!-- 온라인 멤버 목록 수 -->
+	<select id="selectOnlineMemberListCnt" parameterType="reqMemberVO" resultType="integer">
+			SELECT
+				COUNT(1) listCnt
+			FROM
+				TBL_MBR T
+			WHERE
+				WDW_YN = 'N'
+			<if test='oztnNm != null and oztnNm != ""'>
+				AND OZTN_NM LIKE CONCAT('%', #{oztnNm}, '%')
+			</if>
+			<if test='mbrTypCd != null and mbrTypCd != ""'>
+				AND MBR_TYP_CD = #{mbrTypCd}
+			</if>
+			<if test='creDttmOne != null and creDttmOne != ""'>
+				AND DATE_FORMAT(CRE_DTTM, '%Y%m%d') >= REPLACE(#{creDttmOne}, '.', '')
+			</if>
+			<if test='creDttmTwo != null and creDttmTwo != ""'>
+				AND DATE_FORMAT(CRE_DTTM, '%Y%m%d') <![CDATA[  <=  ]]> REPLACE(#{creDttmTwo}, '.', '')
+			</if>
+	</select>
+
+	<!-- 온라인 멤버 상세 -->
+	<select id="selectOnlineMemberInfo" parameterType="reqMemberVO" resultType="memberMVO">
+		SELECT
+			MBR_IDX,			<!-- 회원 인덱스 -->
+			MBR_ID,			<!-- 회원 아이디 -->
+			MBR_PWD,			<!-- 비밀번호 -->
+			MBR_TYP_CD,		<!-- 혁신멤버 구분 공통코드(015) -->
+			FNC_CMMN_CD_NM(MBR_TYP_CD)	MBR_TYP_CD_NM,		<!-- 혁신멤버 구분명 공통코드(015) -->
+			FNC_CMMN_CD_NM(SCL_TYP_CD)	SCL_TYP_CD_NM,		<!-- 소셜 종류명 공통코드(006) -->
+			OZTN_NM,			<!-- 단체명 -->
+			CEO_NM,			<!-- 대표자명 -->
+			OFC_PHN,			<!-- 대표전화 -->
+			CEO_PHN,			<!-- 대표휴대전화 -->
+			OZTN_ADDR,		<!-- 단체주소 -->
+			BLOG,			<!-- 블로그 -->
+			OZTN_IMG_PATH,	<!-- 대표이미지 -->
+			OZTN_IMG_INFO,	<!-- 대표이미지 설명 -->
+			OZTN_ITDC,		<!-- 업체소개 -->
+			FNC_CMMN_CD_NM(LOC_TYP_CD)	LOC_TYP_CD_NM,		<!-- 위치정보종류명 공통코드(016) -->
+			LOC_LAT,			<!-- 위도 -->
+			LOC_LNG,			<!-- 경도 -->
+			LOC_IMG_PATH,		<!-- 위치이미지 -->
+			LOC_IMG_INFO,		<!-- 위치이미지 정보 -->
+			OZTN_SLG,		<!-- 단체슬로건 -->
+			DATE_FORMAT(CRE_DTTM, '%Y-%m-%d') CRE_DTTM,	<!-- 가입일시 -->
+		IF((
+			SELECT
+				COUNT(1)
+			FROM
+				TBL_NEWS_LTTR_SCB
+			WHERE
+				EMIL = TB1.MBR_ID
+		) > 0, 'Y', 'N') NEWS_LTTR_YN, <!-- 뉴스레터 수신여부 -->
+			(SELECT COUNT(1) FROM TBL_MBR_MVIN_REF WHERE MBR_IDX = #{mbrIdx})	invrMbrCnt,		<!-- 뉴스레터 수신여부 -->
+			(
+				SELECT
+					FNC_CMMN_CD_NM(MVIN_GRP_CD)
+				FROM
+					TBL_MVIN_APLY
+				WHERE
+					APLY_PGR_CD = #{aplyPgrCd}
+				AND DATE_FORMAT(now(), '%Y%m%d') BETWEEN REPLACE(MVIN_SRT_DT, '.', '') AND REPLACE(MVIN_END_DT, '.', '')
+				AND CEO_EMIL = #{mbrIdx}
+			)  MVIN_GRP_CD_NM,								<!-- 입주그룹명 -->
+			FNC_OZTN_NM(TB1.MBR_IDX) ASS_OZTN_NM
+		FROM
+			TBL_MBR TB1
+		WHERE
+			MBR_IDX = #{mbrIdx}			<!-- 회원 인덱스 -->
+	</select>
+
+</mapper>

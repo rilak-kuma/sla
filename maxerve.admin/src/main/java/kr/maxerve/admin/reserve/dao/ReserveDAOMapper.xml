@@ -1,0 +1,639 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.maxerve.admin.reserve.reserveDAO">
+
+	<!-- 모두모임방, 야외공간 예약 현황 -->
+	<select id="selectReserveList" parameterType="reqFacilitiesReserveVO" resultType="facilitiesReserveMVO">
+		SELECT
+			TB3.MBR_ID,				<!-- 회원ID -->
+			TB1.FCT_RSVT_IDX,		<!-- 시설예약 인덱스 -->
+			TB1.OZTN_NM,			<!-- 단체명 -->
+			DATE_FORMAT(TB1.SRT_DTTM, '%Y.%m.%d %H:%i') srtDttm,	<!-- 사용 시작 일시 -->
+			DATE_FORMAT(TB1.END_DTTM, '%Y.%m.%d %H:%i') endDttm,	<!-- 사용 종료 일시 -->
+			DATE_FORMAT(TB1.CRE_DTTM, '%Y.%m.%d')		creDttm,	<!-- 예약 신청 일시 -->
+			FNC_CMMN_CD_NM(TB1.RSVT_PGR)	rsvtPgrNm,				<!-- 진행상태명 -->
+			TB2.FCT_NM				<!-- 시설명 -->
+		FROM
+			TBL_FCT_RSVT TB1,
+			TBL_FCT_MST TB2,
+			TBL_MBR TB3
+		WHERE
+			TB1.FCT_MST_IDX = TB2.FCT_MST_IDX
+		AND TB3.MBR_IDX = TB1.MBR_IDX
+		AND TB2.RSVT_PLC_CD = #{rsvtPlcCd}
+		<if test='fctNm != null and fctNm != ""'>
+		AND TB2.FCT_NM LIKE CONCAT(#{fctNm},'%')
+		</if>
+		AND DATE_FORMAT(TB1.CRE_DTTM, '%Y%m%d') BETWEEN REPLACE(#{creDttmOne}, '.', '') AND REPLACE(#{creDttmTwo}, '.', '')
+		<if test='oztnNm != null and oztnNm != ""'>
+			AND TB1.OZTN_NM LIKE CONCAT('%', #{oztnNm}, '%')
+		</if>
+		<if test='srtDttm != null and srtDttm != ""'>
+			AND TB1.SRT_DTTM >= #{srtDttm}
+		</if>
+		<if test='endDttm != null and endDttm != ""'>
+			<![CDATA[AND TB1.END_DTTM <= #{endDttm}]]>
+		</if>
+		<if test='rsvtPgr != null and rsvtPgr != ""'>
+			AND TB1.RSVT_PGR = #{rsvtPgr}
+		</if>
+		<choose>
+			<when test="sortType == 'sortOne_1'">
+				ORDER BY TB2.FCT_NM ASC
+			</when>
+			<when test="sortType == 'sortOne_2'">
+				ORDER BY TB2.FCT_NM DESC
+			</when>
+			<when test="sortType == 'sortTwo_1'">
+				ORDER BY TB1.CRE_DTTM DESC
+			</when>
+			<when test="sortType == 'sortTwo_2'">
+				ORDER BY TB1.CRE_DTTM ASC
+			</when>
+			<when test="sortType == 'sortThree_1'">
+				ORDER BY TB1.RSVT_PGR ASC
+			</when>
+			<when test="sortType == 'sortThree_2'">
+				ORDER BY TB1.RSVT_PGR DESC
+			</when>
+			<otherwise>
+				ORDER BY TB1.SRT_DTTM DESC
+			</otherwise>
+		</choose>
+		LIMIT ${pageInfo.firstRecordIndex}, ${pageInfo.recordCountPerPage}
+	</select>
+
+	<!-- 모두모임방, 야외공간 예약 현황 건수 -->
+	<select id="selectReserveListCnt" parameterType="reqFacilitiesReserveVO" resultType="int">
+		SELECT
+			COUNT(1) totalRecordCount
+		FROM
+			TBL_FCT_RSVT TB1,
+			TBL_FCT_MST TB2
+		WHERE
+			TB1.FCT_MST_IDX = TB2.FCT_MST_IDX
+		AND TB2.RSVT_PLC_CD = #{rsvtPlcCd}
+		<if test='fctNm != null and fctNm != ""'>
+		AND TB2.FCT_NM LIKE CONCAT(#{fctNm},'%')
+		</if>
+		AND DATE_FORMAT(TB1.CRE_DTTM, '%Y%m%d') BETWEEN REPLACE(#{creDttmOne}, '.', '') AND REPLACE(#{creDttmTwo}, '.', '')
+		<if test='oztnNm != null and oztnNm != ""'>
+			AND TB1.OZTN_NM LIKE CONCAT('%', #{oztnNm}, '%')
+		</if>
+		<if test='srtDttm != null and srtDttm != ""'>
+			AND TB1.SRT_DTTM >= #{srtDttm}
+		</if>
+		<if test='endDttm != null and endDttm != ""'>
+			<![CDATA[AND TB1.END_DTTM <= #{endDttm}]]>
+		</if>
+		<if test='rsvtPgr != null and rsvtPgr != ""'>
+			AND TB1.RSVT_PGR = #{rsvtPgr}
+		</if>
+	</select>
+
+	<!-- 모두모임방, 야외공간 예약 상세 -->
+	<select id="selectReserveInfo" parameterType="String" resultType="facilitiesReserveMVO">
+		SELECT
+
+			TB1.FCT_RSVT_IDX,										<!-- 시설예약 인덱스 -->
+			TB1.OZTN_NM,											<!-- 단체명 -->
+			DATE_FORMAT(TB1.SRT_DTTM, '%Y.%m.%d %H:%i')	SRT_DTTM,	<!-- 사용 시작 일시 -->
+			DATE_FORMAT(TB1.END_DTTM, '%Y.%m.%d %H:%i') END_DTTM,	<!-- 사용 종료 일시 -->
+			TIMESTAMPDIFF(HOUR,TB1.SRT_DTTM,TB1.END_DTTM) USE_HOUR, 	<!-- 총사용시간 -->
+			DATE_FORMAT(TB1.CRE_DTTM, '%Y.%m.%d  %H:%i') CRE_DTTM,	<!-- 예약 신청 일시 -->
+			TB1.RSVT_PGR,											<!-- 진행상태 -->
+			TB1.PRC,												<!-- 결제금액 -->
+			FNC_CMMN_CD_NM(TB1.RSVT_PGR)	rsvtPgrNm,				<!-- 진행상태명 -->
+			TB2.FCT_NM,												<!-- 시설명 -->
+			TB3.MBR_ID,												<!-- 회원ID -->
+			TB3.CEO_PHN,											<!-- 대표휴대전화 -->
+			FNC_CMMN_CD_NM(TB3.MBR_TYP_CD)	mbrTypCdNm,				<!-- 멤버구분 -->
+			TB1.RSVT_EMIL,											<!-- 담당자 이메일 -->
+			TB1.RSVT_PHN_NMBR,										<!-- 담당자 연락처 -->
+			TB1.RSVT_NM,											<!-- 담당자명 -->
+			TB1.RSVT_PSCT,											<!-- 인원 -->
+			TB1.EVT_NM,												<!-- 행사명 -->
+			TB1.EVT_INFO,											<!-- 행사내용 -->
+			TB1.PRM_INFO,											<!-- 홍보물 종류 -->
+			TB1.PRM_YN,												<!-- 홍보물부착여부 -->
+			TB1.BNNR_INFO,											<!-- 현수막 수량 및 사이즈 -->
+			TB1.POW_INFO,											<!-- 전기사용품목 및 와트 -->
+			TB1.POW_YN,												<!-- 전기사용여부 -->
+			TB1.SAFE_MNG_PLAN,										<!-- 안전 관리 계획 -->
+			TB1.CLN_PLAN,											<!-- 뒤처리 계획 -->
+			TB1.USE_TNM,												<!-- 사용기자재 -->
+			TB1.FCT_MST_IDX
+		FROM
+			TBL_FCT_RSVT TB1,
+			TBL_FCT_MST TB2,
+			TBL_MBR TB3
+		WHERE
+			TB1.FCT_MST_IDX = TB2.FCT_MST_IDX
+		AND TB3.MBR_IDX = TB1.MBR_IDX
+		AND TB1.FCT_RSVT_IDX = #{fctRsvtIdx}
+	</select>
+
+	<!-- 모두모임방, 야외공간 예약 수정 -->
+	<update id="updateReserve" parameterType="facilitiesReserveDTO">
+		UPDATE
+			TBL_FCT_RSVT
+		SET
+			RSVT_PGR = #{rsvtPgr}
+		<if test="rsvtPgr.equals('020002')">
+			,APPR_DT = DATE_FORMAT(NOW(),'%Y.%m.%d')
+		</if>
+		WHERE
+			FCT_RSVT_IDX = #{fctRsvtIdx}
+	</update>
+
+	<!-- 파크투어 예약 목록  -->
+	<select id="selectParktourReserveList" parameterType="reqParkTourVO" resultType="parkTourMVO">
+		SELECT
+			TOUR_APLY_IDX,		<!-- 투어 예약 인덱스	int(11) -->
+			FNC_CMMN_CD_NM(TOUR_PGR)	tourPgrNm,	<!-- 예약진행상태 공통코드(020)	varchar(50) -->
+			CRE_DTTM,			<!-- 생성일시	datetime -->
+			APPY_PHN_NMBR,		<!-- 신청자 연락처	varchar(50) -->
+			APPY_NM,			<!-- 신청자명	varchar(50) -->
+			PSCT,				<!-- 인원	int(11) -->
+			OZTN_NM,			<!-- 단체명	varchar(50) -->
+			TOUR_DTTM			<!-- 투어 예약 일시	datetime -->
+		FROM
+			TBL_TOUR_APLY
+		WHERE
+			DEL_YN != 'Y'
+		AND DATE_FORMAT(CRE_DTTM, '%Y%m%d') BETWEEN REPLACE(#{creDttmOne}, '.', '') AND REPLACE(#{creDttmTwo}, '.', '')
+		<if test='oztnNm != null and oztnNm != ""'>
+			AND OZTN_NM LIKE CONCAT('%', #{oztnNm}, '%')
+		</if>
+		<if test='tourDttmOne != null and tourDttmOne != ""'>
+			AND TOUR_DTTM >= #{tourDttmOne}
+		</if>
+		<if test='tourDttmTwo != null and tourDttmTwo != ""'>
+			<![CDATA[AND TOUR_DTTM <= #{tourDttmTwo}]]>
+		</if>
+		<if test='tourPgr != null and tourPgr != ""'>
+			AND TOUR_PGR = #{tourPgr}
+		</if>
+		ORDER BY
+			<if test="sortType == 'sortOne_1'">
+					CRE_DTTM ASC,
+			</if>
+			<if test="sortType == 'sortOne_2'">
+					CRE_DTTM DESC,
+			</if>
+			<if test="sortType == 'sortTwo_1'">
+					TOUR_PGR DESC,
+			</if>
+			<if test="sortType == 'sortTwo_2'">
+					TOUR_PGR ASC,
+			</if>
+					OZTN_NM DESC, TOUR_APLY_IDX DESC
+		LIMIT ${pageInfo.firstRecordIndex}, ${pageInfo.recordCountPerPage}
+	</select>
+
+	<!-- 파크투어 예약 목록 건수 -->
+	<select id="selectParktourReserveListCnt" parameterType="reqParkTourVO" resultType="int">
+		SELECT
+			COUNT(1) totalRecordCount
+		FROM
+			TBL_TOUR_APLY
+		WHERE
+			DEL_YN != 'Y'
+		AND DATE_FORMAT(CRE_DTTM, '%Y%m%d') BETWEEN REPLACE(#{creDttmOne}, '.', '') AND REPLACE(#{creDttmTwo}, '.', '')
+		<if test='oztnNm != null and oztnNm != ""'>
+			AND OZTN_NM LIKE CONCAT('%', #{oztnNm}, '%')
+		</if>
+		<if test='tourDttmOne != null and tourDttmOne != ""'>
+			AND TOUR_DTTM >= #{tourDttmOne}
+		</if>
+		<if test='tourDttmTwo != null and tourDttmTwo != ""'>
+			<![CDATA[AND TOUR_DTTM <= #{tourDttmTwo}]]>
+		</if>
+		<if test='tourPgr != null and tourPgr != ""'>
+			AND TOUR_PGR = #{tourPgr}
+		</if>
+	</select>
+
+	<!-- 파크투어 예약 목록 엑셀 저장 -->
+	<select id="selectParktourReserveListExcel" parameterType="reqParkTourVO" resultType="parkTourMVO">
+		SELECT
+			TOUR_APLY_IDX,		<!-- 투어 예약 인덱스	int(11) -->
+			FNC_CMMN_CD_NM(TOUR_PGR)	tourPgrNm,	<!-- 예약진행상태 공통코드(020)	varchar(50) -->
+			CRE_DTTM,			<!-- 생성일시	datetime -->
+			APPY_PHN_NMBR,		<!-- 신청자 연락처	varchar(50) -->
+			APPY_NM,			<!-- 신청자명	varchar(50) -->
+			PSCT,				<!-- 인원	int(11) -->
+			OZTN_NM,			<!-- 단체명	varchar(50) -->
+			TOUR_DTTM			<!-- 투어 예약 일시	datetime -->
+		FROM
+			TBL_TOUR_APLY
+		WHERE
+			DEL_YN != 'Y'
+		AND DATE_FORMAT(CRE_DTTM, '%Y%m%d') BETWEEN REPLACE(#{creDttmOne}, '.', '') AND REPLACE(#{creDttmTwo}, '.', '')
+		<if test='oztnNm != null and oztnNm != ""'>
+			AND OZTN_NM LIKE CONCAT('%', #{oztnNm}, '%')
+		</if>
+		<if test='tourDttmOne != null and tourDttmOne != ""'>
+			AND TOUR_DTTM >= #{tourDttmOne}
+		</if>
+		<if test='tourDttmTwo != null and tourDttmTwo != ""'>
+			<![CDATA[AND TOUR_DTTM <= #{tourDttmTwo}]]>
+		</if>
+		<if test='tourPgr != null and tourPgr != ""'>
+			AND TOUR_PGR = #{tourPgr}
+		</if>
+		ORDER BY
+			<if test="sortType == 'sortOne_1'">
+					CRE_DTTM ASC,
+			</if>
+			<if test="sortType == 'sortOne_2'">
+					CRE_DTTM DESC,
+			</if>
+			<if test="sortType == 'sortTwo_1'">
+					TOUR_PGR DESC,
+			</if>
+			<if test="sortType == 'sortTwo_2'">
+					TOUR_PGR ASC,
+			</if>
+					OZTN_NM DESC, TOUR_APLY_IDX DESC
+	</select>
+
+	<!-- 파크투어 예약 상세 -->
+	<select id="selectParktourReserveInfo" parameterType="String" resultType="parkTourMVO">
+		SELECT
+			TOUR_APLY_IDX,	<!-- 투어 예약 인덱스 -->
+			TOUR_PGR,		<!-- 예약진행상태 공통코드(020) -->
+			FNC_CMMN_CD_NM(TOUR_PRPS_CD) TOUR_PRPS_CD_NM,	<!-- 방문목적 공통코드(018) 명 -->
+			FNC_CMMN_CD_NM(OZTN_TYP_CD) OZTN_TYP_CD_NM,	<!-- 단체형태 공통코드(033) 명 -->
+			CRE_DTTM,		<!-- 생성일시 -->
+			MOD_DTTM,		<!-- 수정일시 -->
+			COALESCE(TOUR_DTTM,'') TOUR_DTTM,		<!-- 투어 예약 일시 -->
+			COALESCE(TOUR_DSD_DTTM,'') TOUR_DSD_DTTM,	<!-- 투어확정일시 -->
+			OZTN_NM,		<!-- 단체명 -->
+			LDR_EMIL,		<!-- 인솔자 이메일 -->
+			LDR_PHN_NMBR,	<!-- 인솔자 연락처 -->
+			LDR_NM,			<!-- 인솔자명 -->
+			LDR_OZTN_NM,
+			APPY_EMIL,		<!-- 신청자 이메일 -->
+			APPY_PHN_NMBR,	<!-- 신청자 연락처 -->
+			APPY_NM,		<!-- 신청자명 -->
+			APPY_OZTN_NM,
+			PSCT,			<!-- 인원 -->
+			TOUR_PRPS_ETC,	<!-- 방문목적 기타 -->
+			ETC,			<!-- 기타 -->
+			CMMT			<!-- 관리자코멘트 -->
+		FROM
+			TBL_TOUR_APLY
+		WHERE
+  			TOUR_APLY_IDX	=	#{tourAplyIdx}
+	</select>
+
+	<!-- 파크투어 확정가능한 일정 목록 -->
+	<select id="selectTourScheduleList" parameterType="calendarDTO" resultType="calendarDTO">
+		SELECT
+			DATE_FORMAT(CLND_DT, '%Y-%m-%d 15:00:00') clndDt
+		FROM
+			TBL_CLND
+		WHERE
+			CLND_DT NOT IN (SELECT
+								DATE_FORMAT(TOUR_DSD_DTTM, '%Y.%m.%d')
+							FROM
+								TBL_TOUR_APLY TB2
+							WHERE
+								TOUR_DSD_DTTM IS NOT NULL
+							AND DATE_FORMAT(TOUR_DSD_DTTM, '%Y%m') = #{clndDt}
+							)
+		AND DATE_FORMAT(CLND_DT, '%Y%m') = #{clndDt}
+		AND DOW = '4'
+		AND HDY_YN = 'N'
+	</select>
+
+	<!-- 파크투어 명단 -->
+	<select id="selectTourAttendList" resultType="tourAttendDTO" parameterType="String">
+		SELECT
+			ORD,		<!-- 순서 -->
+			OZTN_NM,	<!-- 단체명 -->
+			ATT_NM		<!-- 참석자명 -->
+		FROM
+			TBL_TOUR_ATT
+		WHERE
+			TOUR_APLY_IDX = #{tourAplyIdx}
+	</select>
+
+	<!-- 파크투어 차량 목록 -->
+	<select id="selectTourCarList" resultType="tourCarMVO" parameterType="String">
+		SELECT
+			FNC_CMMN_CD_NM(CAR_TYP_CD)	carTypCdNm,	<!-- 차량종류명 -->
+			CAR_CNT									<!-- 차량수 -->
+		FROM
+			TBL_TOUR_CAR
+		WHERE
+			TOUR_APLY_IDX = #{tourAplyIdx}
+	</select>
+
+	<!-- 파크투어 예약상세 수정 -->
+	<update id="updateParktourReserveInfo" parameterType="tourApplyDTO">
+		UPDATE
+			TBL_TOUR_APLY
+		SET
+		<if test="cmmt != '' and cmmt != null ">
+			CMMT = #{cmmt},
+		</if>
+		<if test="tourDsdDttm != '' and tourDsdDttm != null ">
+			TOUR_DSD_DTTM = #{tourDsdDttm},
+		</if>
+			TOUR_PGR = #{tourPgr}
+		WHERE
+			TOUR_APLY_IDX = #{tourAplyIdx}
+	</update>
+
+	<!-- 예약 현황(달력) -->
+	<select id="selectCalenderReserveStateList" resultType="calenderFacilitiesReserveMVO" parameterType="reqFacilitiesMasterVO" >
+		SELECT
+		    TB_A.*,
+		    DATE_FORMAT(TB_B.SRT_DTTM,'%Y.%m.%d %H:%i') SRT_DTTM,
+		    DATE_FORMAT(TB_B.END_DTTM,'%Y.%m.%d %H:%i') END_DTTM,
+		    TB_B.OZTN_NM
+		FROM(
+			SELECT
+				TB1.*,
+				TB2.*,
+			(
+					SELECT
+						FCT_RSVT_IDX
+					FROM
+						TBL_FCT_RSVT
+					WHERE
+						DEL_YN != 'Y'
+					AND FCT_MST_IDX = #{fctMstIdx}
+					AND (
+						RSVT_PGR  IN ('020001','020003')
+						OR
+						(RSVT_PGR = '020002' AND
+							DATE_FORMAT(DATE_ADD(APPR_DT, INTERVAL 2 DAY),'%Y.%m.%d') <![CDATA[ < ]]>DATE_FORMAT(NOW(),'%Y.%m.%d'))
+					)
+					AND (STR_TO_DATE(CONCAT(TB1.CLND_DT, ' ', TB2.TM), '%Y.%m.%d %H:%i') >= SRT_DTTM AND
+						 STR_TO_DATE(CONCAT(TB1.CLND_DT, ' ', TB2.TM), '%Y.%m.%d %H:%i') <![CDATA[ < ]]> END_DTTM)
+				) FCT_RSVT_IDX
+			FROM
+				TBL_CLND TB1,
+				TBL_TM TB2
+			WHERE
+				TB1.CLND_DT BETWEEN STR_TO_DATE(#{srtDt}, '%Y.%m.%d') AND DATE_ADD(#{srtDt}, INTERVAL 6 DAY)
+			AND TB2.TM BETWEEN #{srtHm} AND #{endHm}
+		<if test="rsvtUnit.equalsIgnoreCase('60')">
+			AND TB2.TM LIKE CONCAT('%',':00')
+		</if>
+		   ) TB_A, TBL_FCT_RSVT TB_B
+		WHERE
+			TB_B.FCT_RSVT_IDX = TB_A.FCT_RSVT_IDX
+		ORDER BY
+			TB_A.TM, TB_A.CLND_DT
+	</select>
+
+	<!-- 메이커스페이스 클래스 목록 -->
+	<select id="selectMkspClassScheduleList" parameterType="reqMakerspaceClassVO" resultType="makerspaceClassReserveMVO">
+		SELECT
+		  TB_A.MKSP_CLS_IDX, <!-- '메이커스페이스 클래스 인덱스' -->
+		  TITL, 		<!-- '제목' -->
+		  SRT_DT, 		<!-- '모집시작기간' -->
+		  END_DT, 		<!-- '모집종료기간' -->
+		  CASE WHEN DATE_FORMAT(NOW(),'%Y.%m.%d') BETWEEN SRT_DT AND END_DT THEN 'Y' ELSE 'N' END useYn, 	<!-- '진행여부' -->
+		  mkspClsRsvCnt	<!-- 예약인원수 -->
+		FROM
+			TBL_MKSP_CLS TB_A,
+			(
+				SELECT
+				  SUM(cnt) mkspClsRsvCnt,
+				  TB4.MKSP_CLS_IDX
+				FROM
+				  (
+				    SELECT
+				      count(1) cnt,
+				      MKSP_CLS_GRP_IDX
+				    FROM
+				      TBL_FCT_RSVT TB1,
+				      TBL_MKSP_CLS_RSVT TB2
+				    WHERE
+				      TB1.FCT_RSVT_IDX = TB2.FCT_RSVT_IDX
+				    GROUP BY
+				      TB2.MKSP_CLS_GRP_IDX
+				  ) TB3,
+				  TBL_MKSP_CLS_GRP TB4
+				WHERE
+				  TB3.MKSP_CLS_GRP_IDX = TB4.MKSP_CLS_GRP_IDX
+				GROUP BY
+				  TB4.MKSP_CLS_IDX
+			) TB_B
+		WHERE
+			TB_A.MKSP_CLS_IDX = TB_B.MKSP_CLS_IDX
+		AND DEL_YN != 'Y'
+		AND USE_YN = 'Y'
+		ORDER BY
+		<if test="sortType == 'sortOne_1'">
+			USE_YN ASC,
+		</if>
+		<if test="sortType == 'sortOne_2'">
+			USE_YN DESC,
+		</if>
+			TB_A.MKSP_CLS_IDX DESC
+		LIMIT
+			#{pageInfo.firstRecordIndex}, #{pageInfo.recordCountPerPage}
+	</select>
+
+	<!-- 메이커스페이스 클래스 목록 수 -->
+	<select id="selectMkspClassScheduleListCnt" parameterType="reqMakerspaceClassVO" resultType="int" >
+		SELECT
+			COUNT(1) totalRecordCount
+		FROM
+			TBL_MKSP_CLS TB_A,
+			(
+				SELECT
+				  SUM(recordCnt) mkspClsRsvCnt,
+				  TB4.MKSP_CLS_IDX
+				FROM
+				  (
+				    SELECT
+				      count(1) recordCnt,
+				      MKSP_CLS_GRP_IDX
+				    FROM
+				      TBL_FCT_RSVT TB1,
+				      TBL_MKSP_CLS_RSVT TB2
+				    WHERE
+				      TB1.FCT_RSVT_IDX = TB2.FCT_RSVT_IDX
+				    GROUP BY
+				      TB2.MKSP_CLS_GRP_IDX
+				  ) TB3,
+				  TBL_MKSP_CLS_GRP TB4
+				WHERE
+				  TB3.MKSP_CLS_GRP_IDX = TB4.MKSP_CLS_GRP_IDX
+				GROUP BY
+				  TB4.MKSP_CLS_IDX
+			) TB_B
+		WHERE
+			TB_A.MKSP_CLS_IDX = TB_B.MKSP_CLS_IDX
+		AND DEL_YN != 'Y'
+		AND USE_YN = 'Y'
+	</select>
+
+		<!-- 메이커스페이스 클래스 목록  엑셀 저장 -->
+	<select id="selectMkspClassScheduleListExcel" parameterType="reqMakerspaceClassVO" resultType="makerspaceClassReserveMVO">
+		SELECT
+		  TB_A.MKSP_CLS_IDX, <!-- '메이커스페이스 클래스 인덱스' -->
+		  TITL, 		<!-- '제목' -->
+		  SRT_DT, 		<!-- '모집시작기간' -->
+		  END_DT, 		<!-- '모집종료기간' -->
+		  CASE WHEN DATE_FORMAT(NOW(),'%Y.%m.%d') BETWEEN SRT_DT AND END_DT THEN 'Y' ELSE 'N' END useYn, 	<!-- '진행여부' -->
+		  mkspClsRsvCnt	<!-- 예약인원수 -->
+		FROM
+			TBL_MKSP_CLS TB_A,
+			(
+				SELECT
+				  SUM(cnt) mkspClsRsvCnt,
+				  TB4.MKSP_CLS_IDX
+				FROM
+				  (
+				    SELECT
+				      count(1) cnt,
+				      MKSP_CLS_GRP_IDX
+				    FROM
+				      TBL_FCT_RSVT TB1,
+				      TBL_MKSP_CLS_RSVT TB2
+				    WHERE
+				      TB1.FCT_RSVT_IDX = TB2.FCT_RSVT_IDX
+				    GROUP BY
+				      TB2.MKSP_CLS_GRP_IDX
+				  ) TB3,
+				  TBL_MKSP_CLS_GRP TB4
+				WHERE
+				  TB3.MKSP_CLS_GRP_IDX = TB4.MKSP_CLS_GRP_IDX
+				GROUP BY
+				  TB4.MKSP_CLS_IDX
+			) TB_B
+		WHERE
+			TB_A.MKSP_CLS_IDX = TB_B.MKSP_CLS_IDX
+		AND DEL_YN != 'Y'
+		AND USE_YN = 'Y'
+		ORDER BY
+		<if test="sortType == 'sortOne_1'">
+			USE_YN ASC,
+		</if>
+		<if test="sortType == 'sortOne_2'">
+			USE_YN DESC,
+		</if>
+			TB_A.MKSP_CLS_IDX DESC
+	</select>
+
+	<select id="selectMakerSpaceClassReserveInfo" parameterType="makerspaceClassDTO" resultType="makerspaceClassReserveInfoMVO">
+		SELECT
+			TB2.MKSP_CLS_GRP_IDX,
+			TB2.SRT_TM,
+			TB2.END_TM,
+			TB2.GRP_NM,
+			TB2.GRP_ORD,
+			TB2.PRC,
+			TB2.PSCT,
+			COALESCE(CNT,0) mkspClsRsvCnt
+		FROM
+			TBL_MKSP_CLS TB1
+		LEFT OUTER JOIN
+			TBL_MKSP_CLS_GRP TB2
+		ON
+			TB1.MKSP_CLS_IDX = TB2.MKSP_CLS_IDX
+		LEFT OUTER JOIN
+			(
+			    SELECT
+					count(1) CNT,
+					MKSP_CLS_GRP_IDX
+			    FROM
+					TBL_FCT_RSVT TB11,
+					TBL_MKSP_CLS_RSVT TB12
+			    WHERE
+					TB11.FCT_RSVT_IDX = TB12.FCT_RSVT_IDX
+			    GROUP BY
+					TB12.MKSP_CLS_GRP_IDX
+			  ) TB3
+		ON
+			TB2.MKSP_CLS_GRP_IDX = TB3.MKSP_CLS_GRP_IDX
+		WHERE
+			TB1.MKSP_CLS_IDX = #{mkspClsIdx}
+	<if test="srtTm != '' and srtTm != null " >
+		AND TB2.SRT_TM = #{srtTm}
+	</if>
+	    ORDER BY
+	          TB1.MKSP_CLS_IDX
+	</select>
+
+	<select id="selectMakerSpaceClassMbrList" parameterType="reqMakerspaceClassVO" resultType="makerspaceClassReserveInfoMVO">
+		SELECT
+			MKSP_CLS_GRP_IDX,
+            TB1.CRE_DTTM,
+            TB5.CEO_NM,
+            TB5.CEO_PHN,
+            TB5.MBR_ID
+		FROM
+			TBL_FCT_RSVT TB1,
+			TBL_MKSP_CLS_RSVT TB2,
+            TBL_MBR TB5
+		WHERE
+			TB1.FCT_RSVT_IDX = TB2.FCT_RSVT_IDX
+		AND TB2.MKSP_CLS_GRP_IDX IN (
+										SELECT
+											TB4.MKSP_CLS_GRP_IDX
+										FROM
+											TBL_MKSP_CLS TB3
+										LEFT OUTER JOIN
+											TBL_MKSP_CLS_GRP TB4
+										ON
+											TB3.MKSP_CLS_IDX = TB4.MKSP_CLS_IDX
+										WHERE
+											TB3.MKSP_CLS_IDX ='5'
+										AND TB4.SRT_TM = '14:00'
+                                      )
+		AND TB1.MBR_IDX = TB5.MBR_IDX
+	</select>
+
+<!-- 	예약시간 -->
+	<select id="selectMinuteCount" parameterType="string" resultType="int">
+		SELECT
+			COUNT(*)
+		FROM
+			TBL_FCT_RSVT TB1,
+			TBL_FCT_MST TB2,
+			TBL_CLND TB3,
+			TBL_FCT_SCH TB4,
+			TBL_TM TB5
+		WHERE
+			TB1.FCT_RSVT_IDX = #{value}
+		AND TB1.FCT_MST_IDX = TB2.FCT_MST_IDX
+		AND TB3.CLND_DT BETWEEN DATE_FORMAT(TB1.SRT_DTTM, '%Y.%m.%d') AND DATE_FORMAT(TB1.END_DTTM, '%Y.%m.%d')
+		AND TB4.FCT_MST_IDX = TB1.FCT_MST_IDX
+		AND (
+			(TB3.HDY_YN = 'Y' AND TB4.FCT_DOW = 0)
+		OR
+			(TB3.HDY_YN != 'Y' AND TB4.FCT_DOW = TB3.DOW)
+		)
+		AND TB5.TM <![CDATA[>=]]> TB4.SRT_TM
+		AND TB5.TM <![CDATA[<]]> TB4.END_TM
+		AND TB1.SRT_DTTM <![CDATA[>=]]> STR_TO_DATE(CONCAT(TB3.CLND_DT, ' ', TB5.TM), '%Y.%m.%d %H:%i')
+		AND TB1.END_DTTM <![CDATA[<]]> STR_TO_DATE(CONCAT(TB3.CLND_DT, ' ', TB5.TM), '%Y.%m.%d %H:%i')
+	</select>
+
+<!-- 	예약장비목록 -->
+	<select id="selectEquipList" parameterType="string" resultType="equipmentMasterDTO">
+		SELECT
+			TB2.EQP_NM,
+			TB2.EQP_HOUR_PRC,
+			TB2.EQP_HALF_HOUR_PRC,
+			TB1.CNT EQP_TCNT
+		FROM
+			TBL_FCT_RSVT_EQP TB1,
+			TBL_EQP_MST TB2
+		WHERE
+			TB1.FCT_RSVT_MST_IDX = #{value}
+		AND TB1.EQP_MST_IDX = TB2.EQP_MST_IDX
+	</select>
+
+</mapper>

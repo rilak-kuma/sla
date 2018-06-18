@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.maxerve.admin.information.recruitDAO">
+
+	<select id="selectRecruitlist" parameterType="reqRecruitVO" resultType="recruitMVO">
+		SELECT
+			A.RCRT_ROOM_IDX		rcrtRoomIdx,	<!-- 구인 인덱스	int(11) -->
+			B.CEO_NM 			ceoNm,			<!-- 등록자명(ceo명) -->
+      		B.OZTN_NM 			oztnNm,			<!-- 단체명	-->
+			A.TITL				titl,			<!-- 제목	varchar(50)	-->
+			A.HIT_CNT			hitCnt,			<!-- 조회수 -->
+			A.USE_YN			useYn,			<!-- 사용여부	varchar(1) -->
+			A.CRE_DTTM			creDttm			<!-- 등록일시	datetim		-->
+		FROM
+			TBL_RCRT_ROOM A,
+     	 	TBL_MBR B
+		WHERE
+      		A.MBR_IDX = B.MBR_IDX
+		AND A.DEL_YN = 'N'
+		AND DATE_FORMAT(A.CRE_DTTM, '%Y%m%d') BETWEEN REPLACE(#{creDttmOne}, '.', '') AND REPLACE(#{creDttmTwo}, '.', '')
+		<if test='useYn != null and useYn != ""'>
+			AND	A.USE_YN	=	#{useYn}
+		</if>
+		<if test='titl != null and titl != ""'>
+			AND A.TITL	LIKE	CONCAT('%', #{titl}, '%')
+		</if>
+		<if test='ceoNm != null and ceoNm != ""'>
+			AND	A.MBR_IDX	IN	(
+										SELECT
+									  		MBR_IDX
+										FROM
+									  		TBL_MBR
+									  	WHERE
+									  		CEO_NM = #{ceoNm}
+									 )
+		</if>
+		ORDER BY
+		<if test="sortType == 'sortOne_1'">
+				A.CRE_DTTM ASC,
+		</if>
+		<if test="sortType == 'sortOne_2'">
+				A.CRE_DTTM DESC,
+		</if>
+		<if test="sortType == 'sortTwo_1'">
+				A.USE_YN DESC,
+		</if>
+		<if test="sortType == 'sortTwo_2'">
+			 	A.USE_YN ASC,
+		</if>
+				A.RCRT_ROOM_IDX DESC
+		LIMIT ${pageInfo.firstRecordIndex}, ${pageInfo.recordCountPerPage}
+	</select>
+	
+	<select id="selectRecruitlistCnt" parameterType="reqRecruitVO" resultType="int">
+		SELECT
+			COUNT(1) totalRecordCount
+		FROM
+			TBL_RCRT_ROOM
+		WHERE
+			DEL_YN = 'N'
+		AND DATE_FORMAT(CRE_DTTM, '%Y%m%d') BETWEEN REPLACE(#{creDttmOne}, '.', '') AND REPLACE(#{creDttmTwo}, '.', '')
+		<if test='useYn != null and useYn != ""'>
+			AND	USE_YN	=	#{useYn}
+		</if>
+		<if test='titl != null and titl != ""'>
+			AND TITL	LIKE	CONCAT('%', #{titl}, '%')
+		</if>
+		<if test='ceoNm != null and ceoNm != ""'>
+			AND	MBR_IDX	IN	(
+										SELECT
+									  		MBR_IDX
+										FROM
+									  		TBL_MBR
+									  	WHERE
+									  		OZTN_NM = #{ceoNm}
+									 )
+		</if>
+	</select>
+	
+	<select id="selectRecruitInfo" parameterType="String" resultType="recruitMVO">
+		SELECT
+			A.RCRT_ROOM_IDX		rcrtRoomIdx,	<!-- 구인 인덱스	int(11) -->
+			A.MBR_IDX			mbrIdx,			<!-- 회원 인덱스	int(11) -->
+			A.MNGR_MBR_IDX		mngrMbrIdx,		<!-- 수정자 인덱스	int(11) -->
+			A.TITL				titl,			<!-- 제목	varchar(50)	-->
+			A.FLD				fld,			<!-- 모집분야	varchar(50)	-->
+			A.PSCT				psct,			<!-- 모집인원	varchar(50)	-->
+			A.BODY				body,			<!-- 모집정보	varchar(50)	-->
+			A.SAL				sal,			<!-- 급여정보	varchar(50)	-->
+			A.BNF				bnf,			<!-- 복리후생	varchar(50)	-->
+			A.APPY_EMIL_YN		appyEmilYn,		<!-- 지원방법 이메일 여부	varchar(1)	-->
+			A.APPY_VIS_YN		appyVisYn,		<!-- 지원방법 방문여부	varchar(1)	-->
+			A.APPY_POST_YN		appyPostYn,		<!-- 지원방법 우편접수 여부	varchar(1)	-->
+			A.EMIL				emil,			<!-- 이메일 주소	varchar(100)    -->
+			A.ADDR				addr,			<!-- 업체주소	varchar(300)      	-->
+			A.APPY_QSTN			appyQstn,		<!-- 지원문의	varchar(300)      	-->
+			A.PRD_SRT_DT		prdSrtDt,		<!-- 접수 시작일	varchar(10)		-->
+			A.PRD_END_DT		prdEndDt,		<!-- 접수 종료일	varchar(10)		-->
+			A.PRD_RCRT_YN		prdRcrtYn,		<!-- 충원시까지 여부	varchar(10)		-->
+			A.USE_YN			useYn,			<!-- 사용여부	varchar(1) -->
+			A.CRE_DTTM			creDttm,		<!-- 등록일시	datetim		-->
+			A.MOD_DTTM			modDttm,		<!-- 수정일시	datetime	-->
+			B.CEO_NM 			ceoNm,			<!-- 등록자명(ceo명) -->
+      		B.OZTN_NM 			oztnNm,			<!-- 단체명	-->
+			B.BLOG				blog			<!-- 블로그	varchar(10) -->
+		FROM
+			TBL_RCRT_ROOM A,
+     	 	TBL_MBR B
+		WHERE
+      		A.MBR_IDX = B.MBR_IDX
+		AND A.DEL_YN = 'N'
+		AND A.RCRT_ROOM_IDX = #{rcrtRoomIdx}
+	</select>
+	
+	<update id="updateRecruit" parameterType="recruitDTO">
+		UPDATE
+			TBL_RCRT_ROOM
+		SET
+			MNGR_MBR_IDX	=	#{mngrMbrIdx},	<!-- 수정자 인덱스	int(11) -->
+			USE_YN			=	#{useYn}		<!-- 사용여부	varchar(1) -->
+	<if test='delYn != null and delYn != ""'>
+			,DEL_YN			=	#{delYn} 		<!-- 삭제여부	varchar(1) -->
+	</if>
+		WHERE
+			RCRT_ROOM_IDX = #{rcrtRoomIdx}
+	</update>
+
+</mapper>

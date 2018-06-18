@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.maxerve.admin.activity.eventDAO">
+
+	<select id="selectEventList" parameterType="reqEventVO" resultType="eventMVO" >
+		SELECT *
+		FROM (
+			SELECT
+				@rownum:=@rownum+1	rownum,
+				A.EVT_IDX		evtIdx,			<!-- 행사 인덱스	int(11) -->
+				A.MBR_IDX		mbrIdx,			<!-- 회원 인덱스	int(11) -->
+				(SELECT C.CTGR_NM FROM TBL_CTGR C WHERE C.CTGR_IDX = A.CTGR_IDX AND C.DEL_YN = 'N')		ctgrIdxNm,		<!-- 카테고리명	varchar(50) -->
+				A.EVT_TITL		evtTitl,		<!-- 행사 제목		varchar(50) -->
+				DATE_FORMAT(A.CRE_DTTM, '%Y.%m.%d')		creDttm,		<!-- 생성일	datetime -->
+				B.CEO_NM 		ceoNm,			<!-- 등록자명(ceo명) -->
+	      		B.OZTN_NM 		oztnNm,			<!-- 단체명	-->
+	      		CASE WHEN A.USE_YN = 'Y' AND DATE_FORMAT(NOW(), '%Y%m%d') BETWEEN DATE_FORMAT(A.EVT_SRT_DTTM, '%Y%m%d') AND  DATE_FORMAT(A.EVT_END_DTTM, '%Y%m%d') THEN 'Y'ELSE 'N' END useYn
+			FROM
+				TBL_EVT A,
+				TBL_MBR B,
+				(SELECT @rownum:=0) ROW
+			WHERE
+	      		A.MBR_IDX = B.MBR_IDX
+			AND	DEL_YN = 'N'
+			<if test='ctgrIdx != null and ctgrIdx != ""'>
+				AND	A.CTGR_IDX	=	#{ctgrIdx}
+			</if>
+			<if test='useYn == "Y"'>
+				AND	(
+					A.USE_YN = 'Y'
+					AND DATE_FORMAT(NOW(), '%Y%m%d') BETWEEN DATE_FORMAT(A.EVT_SRT_DTTM, '%Y%m%d') AND  DATE_FORMAT(A.EVT_END_DTTM, '%Y%m%d')
+					)
+			</if>
+			<if test='useYn == "N"'>
+				AND	(
+					A.USE_YN = 'N'
+					OR DATE_FORMAT(NOW(), '%Y%m%d') NOT BETWEEN DATE_FORMAT(A.EVT_SRT_DTTM, '%Y%m%d') AND  DATE_FORMAT(A.EVT_END_DTTM, '%Y%m%d')
+					)
+			</if>
+	      	<if test='creDttmOne != null and creDttmOne != ""'>
+				AND DATE_FORMAT(A.CRE_DTTM, '%Y%m%d') >= REPLACE(#{creDttmOne}, '.', '')
+			</if>
+			<if test='creDttmTwo != null and creDttmTwo != ""'>
+				<![CDATA[AND DATE_FORMAT(A.CRE_DTTM, '%Y%m%d') <= REPLACE(#{creDttmTwo}, '.', '')]]>
+			</if>
+			<if test='evtTitl != null and evtTitl != ""'>
+				AND	A.EVT_TITL LIKE CONCAT('%', #{evtTitl}, '%')
+			</if>
+			ORDER BY A.EVT_IDX ASC
+		) Z
+		ORDER BY rownum DESC
+		LIMIT ${pageInfo.firstRecordIndex}, ${pageInfo.recordCountPerPage}
+	</select>
+
+	<select id="selectEventListCnt" parameterType="reqEventVO" resultType="int" >
+		SELECT
+			COUNT(1) totalRecordCount
+		FROM
+			TBL_EVT
+		WHERE
+      		DEL_YN = 'N'
+		<if test='ctgrIdx != null and ctgrIdx != ""'>
+			AND	CTGR_IDX	=	#{ctgrIdx}
+		</if>
+		<if test='useYn == "Y"'>
+			AND	(
+				USE_YN = 'Y'
+				AND DATE_FORMAT(NOW(), '%Y%m%d') BETWEEN DATE_FORMAT(EVT_SRT_DTTM, '%Y%m%d') AND  DATE_FORMAT(EVT_END_DTTM, '%Y%m%d')
+				)
+		</if>
+		<if test='useYn == "N"'>
+			AND	(
+				USE_YN = 'N'
+				OR DATE_FORMAT(NOW(), '%Y%m%d') NOT BETWEEN DATE_FORMAT(EVT_SRT_DTTM, '%Y%m%d') AND  DATE_FORMAT(EVT_END_DTTM, '%Y%m%d')
+				)
+		</if>
+      	<if test='creDttmOne != null and creDttmOne != ""'>
+			AND DATE_FORMAT(CRE_DTTM, '%Y%m%d') >= REPLACE(#{creDttmOne}, '.', '')
+		</if>
+		<if test='creDttmTwo != null and creDttmTwo != ""'>
+			<![CDATA[AND DATE_FORMAT(CRE_DTTM, '%Y%m%d') <= REPLACE(#{creDttmTwo}, '.', '')]]>
+		</if>
+		<if test='evtTitl != null and evtTitl != ""'>
+			AND	EVT_TITL LIKE CONCAT('%', #{evtTitl}, '%')
+		</if>
+	</select>
+
+	<select id="selectEventTotalCnt" resultType="int" >
+		SELECT
+			COUNT(1) totalRecordCount
+		FROM
+			TBL_EVT
+		WHERE
+      		DEL_YN = 'N'
+	</select>
+
+	<select id="selectEventInfo" parameterType="String" resultType="eventMVO" >
+		SELECT
+			A.EVT_IDX,			<!-- 행사 인덱스	int(11) -->
+			A.MBR_IDX,			<!-- 회원 인덱스	int(11) -->
+			A.MNGR_MBR_IDX,	<!-- 수정자 인덱스	int(11) -->
+			(SELECT C.CTGR_NM FROM TBL_CTGR C WHERE C.CTGR_IDX = A.CTGR_IDX AND C.DEL_YN = 'N')		CTGR_IDX_NM,		<!-- 카테고리명	varchar(50) -->
+			A.EVT_TITL,		<!-- 행사 제목		varchar(50) -->
+			A.HIT_CNT,			<!-- 조회수	int(11) -->
+			A.USE_YN,			<!-- 사용여부	varchar(1) -->
+			A.EVT_INFO,		<!-- 이벤트 정보	varchar(1000) -->
+			A.BODY,			<!-- 본문		mediumtext -->
+			A.PSCT,			<!-- 모집인원	varchar(10) -->
+			A.PSCT_FREE_YN,		<!-- 모집인원 무제한 여부	varchar(1) -->
+			A.PAY_FREE_YN,		<!-- 무료여부	varchar(1) -->
+			A.APLY_FREE_YN,		<!-- 이벤트무신청 여부	varchar(1) -->
+			A.EVT_PLC,			<!-- 이벤트 장소	varchar(50) -->
+			A.EVT_SRT_DTTM,		<!-- 이벤트 시작일시	datetime -->
+			A.EVT_END_DTTM,		<!-- 이벤트 종료일시	datetime -->
+			A.APLY_SRT_DTTM,	<!-- 신청 시작 일시	datetime -->
+			A.APLY_END_DTTM,	<!-- 신청 종료 일시	datetime -->
+			A.CRE_DTTM,		<!-- 생성일	datetime -->
+			A.MOD_DTTM,		<!-- 수정일	datetime -->
+			B.CEO_NM,			<!-- 등록자명(ceo명) -->
+      		B.OZTN_NM			<!-- 단체명	-->
+		FROM
+			TBL_EVT A,
+     	 	TBL_MBR B
+		WHERE
+      		A.MBR_IDX = B.MBR_IDX
+		AND A.DEL_YN = 'N'
+		AND A.EVT_IDX	=	#{evtIdx}		<!-- 이벤트 인덱스	int(11) -->
+	</select>
+
+	<select id="updateEvent" parameterType="eventDTO" >
+		UPDATE
+			TBL_EVT
+		SET
+	<if test='delYn != null and delYn != ""'>
+			DEL_YN			=	#{delYn}, 		<!-- 삭제여부	varchar(1) -->
+	</if>
+			MNGR_MBR_IDX	=	#{mngrMbrIdx},	<!-- 수정자 인덱스	int(11) -->
+			USE_YN			=	#{useYn}		<!-- 사용여부	varchar(1) -->
+		WHERE
+			EVT_IDX	=	#{evtIdx}				<!-- 이벤트 인덱스	int(11) -->
+	</select>
+</mapper>

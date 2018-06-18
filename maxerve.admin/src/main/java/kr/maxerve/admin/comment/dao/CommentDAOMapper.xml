@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.maxerve.admin.comment.commonCodeDAO">
+
+	<select id="selectCommentList" parameterType="commentDTO" resultType="commentVO">
+		SELECT
+			A.CMMT_IDX		cmmtIdx,      	<!-- 댓글 인덱스	int(11) -->
+			A.CMMT_LOC_CD	cmmtLocCd,    	<!-- 댓글소재지 공통코드	varchar(50) -->
+			A.TBL_IDX		tblIdx,      	<!-- 테이블 인덱스	varchar(50) -->
+			A.MBR_IDX		mbrIdx,       	<!-- 회원 인덱스	int(11) -->
+			A.BODY			body,         	<!-- 내용	varchar(500) -->
+			A.FILE_PATH		filePath,     	<!-- 첨부이미지	varchar(200) -->
+			A.DEL_YN		delYn,        	<!-- 삭제여부	varchar(1) -->
+			A.CRE_DTTM		creDttm,      	<!-- 등록일시	datetime -->
+			A.MOD_DTTM      modDttm,      	<!-- 수정일시	datetime -->
+			B.OZTN_NM		oztnNm			<!-- 단체명	varchar(50) -->
+		FROM
+			TBL_CMMT A,
+			TBL_MBR B
+		WHERE
+			A.MBR_IDX = B.MBR_IDX
+		AND	CMMT_LOC_CD = #{cmmtLocCd}
+		AND	TBL_IDX = #{tblIdx}
+		AND DEL_YN = 'N'
+		ORDER BY CMMT_IDX DESC
+	</select>
+	
+	<select id="selectCommentLikeList" parameterType="commentVO" resultType="commentVO">
+		SELECT
+			A.CMMT_IDX		cmmtIdx,      	<!-- 댓글 인덱스	int(11) -->
+			A.CMMT_LOC_CD	cmmtLocCd,    	<!-- 댓글소재지 공통코드	varchar(50) -->
+			A.TBL_IDX		tblIdx,      	<!-- 테이블 인덱스	varchar(50) -->
+			A.MBR_IDX		mbrIdx,       	<!-- 회원 인덱스	int(11) -->
+			A.BODY			body,         	<!-- 내용	varchar(500) -->
+			A.FILE_PATH		filePath,     	<!-- 첨부이미지	varchar(200) -->
+			A.DEL_YN		delYn,        	<!-- 삭제여부	varchar(1) -->
+			A.CRE_DTTM		creDttm,      	<!-- 등록일시	datetime -->
+			A.MOD_DTTM      modDttm,      	<!-- 수정일시	datetime -->
+			B.OZTN_NM		oztnNm,			<!-- 단체명	varchar(50) -->
+			(
+				SELECT
+					COUNT(1)
+				FROM
+					TBL_LIKE C
+				WHERE
+					C.LIKE_LOC_CD = #{likeLocCd}
+				AND	C.LIKE_LOC_IDX = A.CMMT_IDX
+			) likeCnt						<!-- 좋아요 수 -->
+		FROM
+			TBL_CMMT A,
+			TBL_MBR B
+		WHERE
+			A.MBR_IDX = B.MBR_IDX
+		AND	CMMT_LOC_CD = #{cmmtLocCd}
+		AND	TBL_IDX = #{tblIdx}
+		AND DEL_YN = 'N'
+		ORDER BY CMMT_IDX DESC
+	</select>
+	
+	<update id="deleteComment" parameterType="commentDTO">
+		UPDATE
+			TBL_CMMT
+		SET
+			DEL_YN = #{delYn}
+		WHERE
+			CMMT_IDX = #{cmmtIdx}
+	</update>
+</mapper>

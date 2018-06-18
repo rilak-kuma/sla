@@ -1,0 +1,375 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.maxerve.admin.payment.paymentDAO">
+<sql id="listQuery">
+	FROM
+		TBL_PAY TB1
+	LEFT OUTER JOIN
+		TBL_PAY_FEES TB2
+		ON
+			TB1.PAY_MTHD = TB2.PAY_MTHD
+	WHERE
+		TB1.RST_CD != ''
+<choose>
+	<when test="locTypCd == null or locTypCd.equals('')">
+		AND TB1.LOC_TYP_CD IN ('010015', '010018')
+	</when>
+	<otherwise>
+		AND TB1.LOC_TYP_CD = #{locTypCd}
+	</otherwise>
+</choose>
+	<if test="oztnNm != null and !oztnNm.equals('')">
+	AND EXISTS (
+		SELECT
+			1
+		FROM
+			TBL_MBR
+		WHERE
+			TB1.MBR_IDX = MBR_IDX
+		AND OZTN_NM LIKE CONCAT('%',#{oztnNm},'%')
+	)
+	</if>
+
+<choose>
+	<when test="srchLocTyp.equalsIgnoreCase('1')">
+	AND TB1.LOC_TYP_CD = '010018'
+	AND EXISTS (
+		SELECT
+			1
+		FROM
+			TBL_FCT_RSVT TS1,
+			TBL_FCT_MST TS2
+		WHERE
+			TS1.FCT_MST_IDX = TS2.FCT_MST_IDX
+		AND TB1.LOC_IDX = TS1.FCT_RSVT_IDX
+		AND TS2.RSVT_PLC_CD = '002001'
+	)
+	</when>
+
+	<when test="srchLocTyp.equalsIgnoreCase('2')">
+	AND TB1.LOC_TYP_CD = '010018'
+	AND EXISTS (
+		SELECT
+			1
+		FROM
+			TBL_FCT_RSVT TS1,
+			TBL_FCT_MST TS2
+		WHERE
+			TS1.FCT_MST_IDX = TS2.FCT_MST_IDX
+		AND TB1.LOC_IDX = TS1.FCT_RSVT_IDX
+		AND TS2.RSVT_PLC_CD = '002002'
+	)
+	</when>
+
+	<when test="srchLocTyp.equalsIgnoreCase('3')">
+	AND TB1.LOC_TYP_CD = '010018'
+	AND EXISTS (
+		SELECT
+			1
+		FROM
+			TBL_FCT_RSVT TS1,
+			TBL_FCT_MST TS2
+		WHERE
+			TS1.FCT_MST_IDX = TS2.FCT_MST_IDX
+		AND TB1.LOC_IDX = TS1.FCT_RSVT_IDX
+		AND TS2.RSVT_PLC_CD = '002004'
+	)
+	</when>
+
+	<when test="srchLocTyp.equalsIgnoreCase('4')">
+	AND TB1.LOC_TYP_CD = '010018'
+	AND EXISTS (
+		SELECT
+			1
+		FROM
+			TBL_FCT_RSVT TS1,
+			TBL_FCT_MST TS2
+		WHERE
+			TS1.FCT_MST_IDX = TS2.FCT_MST_IDX
+		AND TB1.LOC_IDX = TS1.FCT_RSVT_IDX
+		AND TS2.RSVT_PLC_CD = '002003'
+	)
+	</when>
+
+	<when test="srchLocTyp.equalsIgnoreCase('5')">
+	AND TB1.LOC_TYP_CD = '010015'
+	AND EXISTS (
+		SELECT
+			1
+		FROM
+			TBL_SIPL_APLY
+		WHERE
+			SIPL_APLY_IDX = TB1.LOC_IDX
+		AND LOC_TYP_CD = '010005'
+	)
+	</when>
+
+	<when test="srchLocTyp.equalsIgnoreCase('6')">
+	AND TB1.LOC_TYP_CD = '010018'
+	AND EXISTS (
+		SELECT
+			1
+		FROM
+			TBL_FCT_RSVT TS1,
+			TBL_FCT_MST TS2
+		WHERE
+			TS1.FCT_MST_IDX = TS2.FCT_MST_IDX
+		AND TB1.LOC_IDX = TS1.FCT_RSVT_IDX
+		AND TS2.RSVT_PLC_CD = '002006'
+	)
+	</when>
+	<when test="srchLocTyp.equalsIgnoreCase('7')">
+	AND TB1.LOC_TYP_CD = '010018'
+	AND EXISTS (
+		SELECT
+			1
+		FROM
+			TBL_FCT_RSVT TS1,
+			TBL_FCT_MST TS2
+		WHERE
+			TS1.FCT_MST_IDX = TS2.FCT_MST_IDX
+		AND TB1.LOC_IDX = TS1.FCT_RSVT_IDX
+		AND TS2.RSVT_PLC_CD = '002008'
+	)
+	</when>
+	<when test="srchLocTyp.equalsIgnoreCase('8')">
+	AND TB1.LOC_TYP_CD = '010018'
+	AND EXISTS (
+		SELECT
+			1
+		FROM
+			TBL_FCT_RSVT TS1,
+			TBL_FCT_MST TS2
+		WHERE
+			TS1.FCT_MST_IDX = TS2.FCT_MST_IDX
+		AND TB1.LOC_IDX = TS1.FCT_RSVT_IDX
+		AND TS2.RSVT_PLC_CD = '002009'
+	)
+	</when>
+</choose>
+
+	<if test="srtDt != null and !srtDt.equals('')">
+	AND TB1.CRE_DTTM <![CDATA[>=]]> STR_TO_DATE(CONCAT(#{srtDt}, ' 00:00:00'), '%Y.%m.%d %H:%i:%s')
+	</if>
+
+	<if test="endDt != null and !endDt.equals('')">
+	AND TB1.CRE_DTTM <![CDATA[<=]]> STR_TO_DATE(CONCAT(#{endDt}, ' 23:59:59'), '%Y.%m.%d %H:%i:%s')
+	</if>
+
+	<if test="payMthd != null and !payMthd.equals('')">
+	AND TB1.PAY_MTHD = #{payMthd}
+	</if>
+
+<choose>
+	<when test="srchStatus.equalsIgnoreCase('1')">
+	AND TB1.CNCL_RST_CD IN ('2001', '2002', '2211')
+	</when>
+
+	<when test="srchStatus.equalsIgnoreCase('2')">
+	AND TB1.APPR_YN != 'Y'
+	</when>
+
+	<when test="srchStatus.equalsIgnoreCase('3')">
+	AND TB1.APPR_YN = 'Y'
+	</when>
+</choose>
+
+<choose>
+	<when test="oztnLocTypCd != null and oztnLocTypCd.equalsIgnoreCase('010010')">
+	AND TB1.LOC_TYP_CD = '010018'
+	AND EXISTS (
+		SELECT
+			1
+		FROM
+			TBL_FCT_RSVT TS1,
+			TBL_FCT_MST TS2,
+			TBL_AJM_OZTN TS3
+		WHERE
+			TS1.FCT_RSVT_IDX = TB1.LOC_IDX
+		AND TS1.FCT_MST_IDX = TS2.FCT_MST_IDX
+		AND TS2.RSVT_PLC_CD = TS3.LOC_TYP_CD
+		AND TS3.MVIN_APLY_IDX = #{oztnLocIdx}
+	)
+	</when>
+	<when test="oztnLocTypCd != null and oztnLocTypCd.equalsIgnoreCase('010001')">
+	AND TB1.LOC_TYP_CD = '010015'
+	AND EXISTS (
+		SELECT
+			1
+		FROM
+			TBL_SIPL_APLY TS1,
+			TBL_EVT TS2
+		WHERE
+			TB1.LOC_IDX = TS1.SIPL_APLY_IDX
+		AND TS1.LOC_TYP_CD = '010005'
+		AND TS1.LOC_IDX = TS2.EVT_IDX
+		AND TS2.MBR_IDX = #{oztnLocIdx}
+	)
+	</when>
+</choose>
+</sql>
+
+<!-- 결제수 -->
+<select id="selectCount" parameterType="reqPaymentVO" resultType="int">
+	SELECT
+		COUNT(*)
+<include refid="listQuery" />
+</select>
+
+<!-- 결제목록 -->
+<select id="selectList" parameterType="reqPaymentVO" resultType="paymentMVO">
+	SELECT
+		TB1.*,
+	CASE
+		WHEN TB1.LOC_TYP_CD = '010015' THEN
+		(
+			SELECT
+				FNC_CMMN_CD_NM(LOC_TYP_CD)
+			FROM
+				TBL_SIPL_APLY
+			WHERE
+				LOC_TYP_CD = '010005'
+			AND TB1.LOC_IDX = SIPL_APLY_IDX
+		)
+		WHEN TB1.LOC_TYP_CD = '010018' THEN
+		(
+			SELECT
+				FNC_CMMN_CD_NM(TS1.RSVT_PLC_CD)
+			FROM
+				TBL_FCT_MST TS1,
+				TBL_FCT_RSVT TS2
+			WHERE
+				TS1.FCT_MST_IDX = TS2.FCT_MST_IDX
+			AND TB1.LOC_IDX = TS2.FCT_RSVT_IDX
+		)
+		ELSE TB1.LOC_TYP_CD
+	END LOC_TITL,
+	CASE
+		WHEN TB1.LOC_TYP_CD = '010015' THEN
+		(
+			SELECT
+				TS2.EVT_TITL
+			FROM
+				TBL_SIPL_APLY TS1,
+				TBL_EVT TS2
+			WHERE
+				TS1.LOC_TYP_CD = '010005'
+			AND TB1.LOC_IDX = TS1.SIPL_APLY_IDX
+			AND TS1.LOC_IDX = TS2.EVT_IDX
+		)
+		WHEN TB1.LOC_TYP_CD = '010018' THEN
+		(
+			SELECT
+				TS1.FCT_NM
+			FROM
+				TBL_FCT_MST TS1,
+				TBL_FCT_RSVT TS2
+			WHERE
+				TS1.FCT_MST_IDX = TS2.FCT_MST_IDX
+			AND TB1.LOC_IDX = TS2.FCT_RSVT_IDX
+		)
+		ELSE ''
+	END TITL,
+		TB2.OZTN_NM,
+		TB2.MBR_ID
+	FROM
+	(
+		SELECT
+			TB1.*,
+			TB1.PRC*TB2.FEES/100 FEES
+	<include refid="listQuery" />
+		ORDER BY
+			TB1.PAY_IDX DESC
+	<if test="countPerPage gt 0">
+		LIMIT #{limitIndex}, #{countPerPage}
+	</if>
+	) TB1,
+		TBL_MBR TB2
+	WHERE
+		TB1.MBR_IDX = TB2.MBR_IDX
+</select>
+
+<!-- 결제상세 -->
+<select id="selectInfo" parameterType="string" resultType="paymentMVO">
+	SELECT
+		TB1.*,
+	CASE
+		WHEN TB1.LOC_TYP_CD = '010014' THEN
+		(
+			SELECT
+				FNC_CMMN_CD_NM(LOC_TYP_CD)
+			FROM
+				TBL_SPO
+			WHERE
+				TB1.LOC_IDX = SPO_IDX
+		)
+		WHEN TB1.LOC_TYP_CD = '010015' THEN
+		(
+			SELECT
+				FNC_CMMN_CD_NM(LOC_TYP_CD)
+			FROM
+				TBL_SIPL_APLY
+			WHERE
+				LOC_TYP_CD = '010005'
+			AND TB1.LOC_IDX = SIPL_APLY_IDX
+		)
+		WHEN TB1.LOC_TYP_CD = '010018' THEN
+		(
+			SELECT
+				FNC_CMMN_CD_NM(TS1.RSVT_PLC_CD)
+			FROM
+				TBL_FCT_MST TS1,
+				TBL_FCT_RSVT TS2
+			WHERE
+				TS1.FCT_MST_IDX = TS2.FCT_MST_IDX
+			AND TB1.LOC_IDX = TS2.FCT_RSVT_IDX
+		)
+		ELSE TB1.LOC_TYP_CD
+	END LOC_TITL,
+	CASE
+		WHEN TB1.LOC_TYP_CD = '010014' THEN
+		(
+			SELECT
+				TS2.PJT_TITL
+			FROM
+				TBL_SPO TS1,
+				TBL_PJT TS2
+			WHERE
+				TS1.LOC_TYP_CD = '010004'
+			AND TB1.LOC_IDX = TS1.SPO_IDX
+			AND TS1.LOC_IDX = TS2.PJT_IDX
+		)
+		WHEN TB1.LOC_TYP_CD = '010015' THEN
+		(
+			SELECT
+				TS2.EVT_TITL
+			FROM
+				TBL_SIPL_APLY TS1,
+				TBL_EVT TS2
+			WHERE
+				TS1.LOC_TYP_CD = '010005'
+			AND TB1.LOC_IDX = TS1.SIPL_APLY_IDX
+			AND TS1.LOC_IDX = TS2.EVT_IDX
+		)
+		WHEN TB1.LOC_TYP_CD = '010018' THEN
+		(
+			SELECT
+				TS1.FCT_NM
+			FROM
+				TBL_FCT_MST TS1,
+				TBL_FCT_RSVT TS2
+			WHERE
+				TS1.FCT_MST_IDX = TS2.FCT_MST_IDX
+			AND TB1.LOC_IDX = TS2.FCT_RSVT_IDX
+		)
+		ELSE ''
+	END TITL
+	FROM
+		TBL_PAY TB1
+	WHERE
+		TB1.PAY_IDX = #{value}
+</select>
+
+</mapper>

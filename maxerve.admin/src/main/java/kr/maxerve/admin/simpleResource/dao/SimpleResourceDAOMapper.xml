@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.maxerve.admin.simpleResource.simpleResourceDAO">
+<!-- 	단순리소스 목록 -->
+	<select id="selectList" parameterType="simpleResourceDTO" resultType="simpleResourceDTO">
+		SELECT
+			SIPL_RSC_IDX siplRscIdx,
+			SIPL_RSC_TYP_CD siplRscTypCd,
+			PGR_CD pgrCd,
+			SIPL_RSC_CNTT siplRscCntt
+		FROM
+			TBL_SIPL_RSC
+		WHERE
+			SIPL_RSC_TYP_CD = #{siplRscTypCd}
+		ORDER BY
+			SIPL_RSC_IDX
+	</select>
+
+<!-- 	단순리소스 등록 -->
+	<insert id="insert" parameterType="simpleResourceDTO">
+		INSERT INTO
+			TBL_SIPL_RSC
+		(
+			SIPL_RSC_IDX,		<!-- 단순리소스 인덱스 -->
+			SIPL_RSC_TYP_CD,		<!-- 단순리소스 종류 공통코드(024) -->
+			PGR_CD,			<!-- 진행상태 공통코드(020) -->
+			SIPL_RSC_CNTT		<!-- 내용 -->
+		) VALUES (
+			#{siplRscIdx},
+			#{siplRscTypCd},
+			#{pgrCd},
+			#{siplRscCntt}
+		)
+		ON DUPLICATE KEY UPDATE
+			PGR_CD = #{pgrCd},
+			SIPL_RSC_CNTT = #{siplRscCntt}
+	</insert>
+
+<!-- 	단순리소스 삭제 -->
+	<delete id="delete" parameterType="simpleResourceDTO">
+		DELETE
+		FROM
+			TBL_SIPL_RSC
+		WHERE
+			SIPL_RSC_TYP_CD = #{siplRscTypCd}
+	</delete>
+
+	<!-- 단순리소스정보 -->
+	<select id="selectInfo" parameterType="simpleResourceDTO" resultType="string">
+		SELECT
+			SIPL_RSC_CNTT
+		FROM
+			TBL_SIPL_RSC
+		WHERE
+			SIPL_RSC_TYP_CD = #{siplRscTypCd}
+		AND PGR_CD = #{pgrCd}
+		LIMIT 1
+	</select>
+</mapper>

@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.maxerve.admin.reserve.facilitiesMemberStateDAO">
+
+	<!-- 월회원현황 -->
+	<select id="selectFacilitiesMemberStateList" parameterType="reqFacilitiesMemberVO" resultType="facilitiesMemberMVO" >
+		SELECT
+		      TB1.actMth,							<!-- 이용년월 -->
+		      COALESCE(memberCnt,0) memberCnt,	<!-- 가입회원수 -->
+		      CONCAT(DATE_FORMAT(DATE_ADD(CONCAT(TB1.actMth,'.15'), INTERVAL -1 MONTH),'%Y.%m.%d'),'~',CONCAT(TB1.actMth,'.14')) recruitmentPrd,	<!-- 모집기간 -->
+		      CASE WHEN DATE_FORMAT(CONCAT(TB1.actMth,'.14'),'%Y%m%d') > DATE_FORMAT(NOW(),'%Y%m%d') THEN 'Y' ELSE 'N' END	useYn,				<!-- 진행상태 -->
+		<if test="locTypCd == '002003' " >
+		      '75,000' PRC						<!-- 월회원비 -->
+		</if>
+		<if test="locTypCd == '002004' " >
+		      '165,000' PRC,					<!-- 월회원비 -->
+		      '20'		lmtMbCnt				<!-- 모집정원 -->
+		</if>
+		FROM
+			(
+	          SELECT DATE_FORMAT(CLND_DT,'%Y.%m') actMth
+	    			FROM
+	            TBL_CLND
+	          WHERE
+	             DATE_FORMAT(CLND_DT,'%Y%m') BETWEEN '201601' AND DATE_FORMAT(NOW(),'%Y%m')
+	          GROUP BY  DATE_FORMAT(CLND_DT,'%Y%m')
+			) TB1
+		LEFT OUTER JOIN
+			(
+    		SELECT  COUNT(1) memberCnt,
+	              ACT_MTH actMth
+		    FROM
+			    TBL_FCT_MBR
+			WHERE
+				LOC_TYP_CD = #{locTypCd}
+        	GROUP BY ACT_MTH
+			) TB2
+		ON TB1.actMth = TB2.actMth
+		ORDER BY
+		<choose>
+			<when test="sortType == 'sortOne_1'">
+				useYn DESC,
+			</when>
+			<when test="sortType == 'sortOne_2'">
+				useYn ASC,
+			</when>
+		</choose>
+				TB1.actMth DESC
+		LIMIT ${pageInfo.firstRecordIndex}, ${pageInfo.recordCountPerPage}
+	</select>
+	
+	<!-- 월회원현황 목록 수-->
+	<select id="selectFacilitiesMemberStateListCnt" parameterType="reqFacilitiesMemberVO" resultType="int" >
+		SELECT
+				COUNT(1) totalRecordCount
+		FROM(
+		    	SELECT
+					DATE_FORMAT(CLND_DT,'%Y%m')
+				FROM
+					TBL_CLND
+				WHERE
+					DATE_FORMAT(CLND_DT,'%Y%m') BETWEEN '201601' AND DATE_FORMAT(NOW(),'%Y%m')
+				GROUP BY  DATE_FORMAT(CLND_DT,'%Y%m')
+		    ) A
+	</select>
+	
+	<!-- 월회원현황 -->
+	<select id="selectFacilitiesMemberStateListExcel" parameterType="reqFacilitiesMemberVO" resultType="facilitiesMemberMVO" >
+		SELECT
+		      TB1.actMth,						<!-- 이용년월 -->
+		      COALESCE(memberCnt,0) memberCnt,	<!-- 가입회원수 -->
+		      CONCAT(DATE_FORMAT(DATE_ADD(CONCAT(TB1.actMth,'.15'), INTERVAL -1 MONTH),'%Y.%m.%d'),'~',CONCAT(TB1.actMth,'.14')) recruitmentPrd,	<!-- 모집기간 -->
+		      CASE WHEN DATE_FORMAT(CONCAT(TB1.actMth,'.14'),'%Y%m%d') > DATE_FORMAT(NOW(),'%Y%m%d') THEN 'Y' ELSE 'N' END	useYn,				<!-- 진행상태 -->
+		<if test="locTypCd == '002003' " >
+		      '75,000' PRC						<!-- 월회원비 -->
+		</if>
+		<if test="locTypCd == '002004' " >
+		      '165,000' PRC,					<!-- 월회원비 -->
+		      '20'		lmtMbCnt				<!-- 모집정원 -->
+		</if>
+		FROM
+			(
+	          SELECT DATE_FORMAT(CLND_DT,'%Y.%m') actMth
+	    			FROM
+	            TBL_CLND
+	          WHERE
+	             DATE_FORMAT(CLND_DT,'%Y%m') BETWEEN '201601' AND DATE_FORMAT(NOW(),'%Y%m')
+	          GROUP BY  DATE_FORMAT(CLND_DT,'%Y%m')
+			) TB1
+		LEFT OUTER JOIN
+			(
+    		SELECT  COUNT(1) memberCnt,
+	              ACT_MTH actMth
+		    FROM
+			    TBL_FCT_MBR
+			WHERE
+				LOC_TYP_CD = #{locTypCd}
+        	GROUP BY ACT_MTH
+			) TB2
+		ON TB1.actMth = TB2.actMth
+		ORDER BY
+		<choose>
+			<when test="sortType == 'sortOne_1'">
+				useYn DESC,
+			</when>
+			<when test="sortType == 'sortOne_2'">
+				useYn ASC,
+			</when>
+		</choose>
+				TB1.actMth DESC
+	</select>
+	
+	<select id="selectFacilitiesMemberList" parameterType="reqFacilitiesMemberInfoVO" resultType="facilitiesMemberMVO" >
+		SELECT 
+			TB1.MBR_IDX,
+			TB1.ACT_MTH,
+			TB1.CRE_DTTM,
+			TB2.MBR_ID,
+			TB2.OZTN_NM,
+			TB2.CEO_NM,
+			TB2.CEO_PHN,
+			FNC_CMMN_CD_NM(TB2.MBR_TYP_CD) mbrTypCdNm
+		FROM
+			TBL_FCT_MBR TB1,
+			TBL_MBR TB2
+		WHERE
+			TB1.MBR_IDX = TB2.MBR_IDX
+		AND TB1.LOC_TYP_CD = #{locTypCd}
+		AND TB1.ACT_MTH = #{actMth}
+		ORDER BY
+		<choose>
+			<when test="sortType == 'sortOne_1'">
+				mbrTypCdNm DESC,
+			</when>
+			<when test="sortType == 'sortOne_2'">
+				mbrTypCdNm ASC,
+			</when>
+			<when test="sortType == 'sorTwo_1'">
+				CRE_DTTM DESC,
+			</when>
+			<when test="sortType == 'sortTwo_2'">
+				CRE_DTTM ASC,
+			</when>
+		</choose>
+				TB2.OZTN_NM DESC
+	</select>
+	
+	<select id="selectFacilitiesMemberListExcel" parameterType="reqFacilitiesMemberInfoVO" resultType="facilitiesMemberMVO" >
+		SELECT 
+			TB1.MBR_IDX,
+			TB1.ACT_MTH,
+			TB1.CRE_DTTM,
+			TB2.MBR_ID,
+			TB2.OZTN_NM,
+			TB2.CEO_NM,
+			TB2.CEO_PHN,
+			FNC_CMMN_CD_NM(TB2.MBR_TYP_CD) mbrTypCdNm
+		FROM
+			TBL_FCT_MBR TB1,
+			TBL_MBR TB2
+		WHERE
+			TB1.MBR_IDX = TB2.MBR_IDX
+		AND TB1.LOC_TYP_CD = #{locTypCd}
+		AND TB1.ACT_MTH = #{actMth}
+		ORDER BY
+		<choose>
+			<when test="sortType == 'sortOne_1'">
+				mbrTypCdNm DESC,
+			</when>
+			<when test="sortType == 'sortOne_2'">
+				mbrTypCdNm ASC,
+			</when>
+			<when test="sortType == 'sorTwo_1'">
+				CRE_DTTM DESC,
+			</when>
+			<when test="sortType == 'sortTwo_2'">
+				CRE_DTTM ASC,
+			</when>
+		</choose>
+				TB2.OZTN_NM DESC
+	</select>
+	
+</mapper>

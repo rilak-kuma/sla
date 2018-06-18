@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.maxerve.admin.category.categoryDAO">
+<!-- 	카테고리 목록 -->
+	<select id="selectList" parameterType="categoryDTO" resultType="categoryDTO">
+		SELECT
+			CTGR_IDX	  ctgrIdx,
+			CTGR_TYP_CD	  ctgrTypCd,
+			CTGR_NM		  ctgrNm,
+			CTGR_IMG	  ctgrImg,
+			CTGR_ORD	  ctgrOrd,
+			REF_TYP_CD refTypCd,
+			SPO_YN	spoYn,
+			DEL_YN		  delYn,
+			CRE_DTTM	  creDttm,
+			MOD_DTTM	  modDttm
+		FROM
+			TBL_CTGR
+		WHERE
+			DEL_YN != 'Y'
+		AND CTGR_TYP_CD = #{ctgrTypCd}
+		ORDER BY
+			CTGR_ORD
+	</select>
+
+<!-- 	카테고리 등록 -->
+	<insert id="insert" parameterType="categoryDTO" useGeneratedKeys="true" keyProperty="mngrMbrIdx">
+		INSERT INTO
+			TBL_CTGR
+		(
+			CTGR_TYP_CD,	<!-- VARCHAR(50) NOT NULL COMMENT '카테고리 종류 공통코드(009)' -->
+			CTGR_NM,		<!-- VARCHAR(50) NOT NULL COMMENT '카테고리명' -->
+			CTGR_IMG,		<!-- VARCHAR(200) NOT NULL COMMENT '카테고리 이미지' -->
+			CTGR_ORD,	 	<!-- TINYINT(4) NOT NULL COMMENT '카테고리 순서' -->
+			REF_TYP_CD,		<!-- VARCHAR(50) NOT NULL DEFAULT '000' COMMENT '자료유형 공통코드(004)', -->
+			SPO_YN			<!-- VARCHAR(1) NOT NULL DEFAULT 'N' COMMENT '후원여부', -->
+		)
+		SELECT
+			#{ctgrTypCd},
+			#{ctgrNm},
+			#{ctgrImg},
+			IFNULL(MAX(CTGR_ORD), 0)+1,
+			#{refTypCd},
+			#{spoYn}
+		FROM
+			TBL_CTGR
+		WHERE
+			DEL_YN != 'Y'
+		AND CTGR_TYP_CD = #{ctgrTypCd}
+	</insert>
+
+<!-- 	카테고리 정보 -->
+	<select id="selectInfo" parameterType="string" resultType="categoryDTO">
+		SELECT
+			CTGR_IDX	  ctgrIdx,
+			CTGR_TYP_CD	  ctgrTypCd,
+			CTGR_NM		  ctgrNm,
+			CTGR_IMG	  ctgrImg,
+			CTGR_ORD	  ctgrOrd,
+			REF_TYP_CD refTypCd,
+			SPO_YN	spoYn,
+			DEL_YN		  delYn,
+			CRE_DTTM	  creDttm,
+			MOD_DTTM	  modDttm
+		FROM
+			TBL_CTGR
+		WHERE
+			CTGR_IDX = #{value}
+	</select>
+
+<!-- 	카테고리 수정 -->
+	<update id="update" parameterType="categoryDTO">
+		UPDATE
+			TBL_CTGR
+		SET
+			CTGR_NM = #{ctgrNm},
+			CTGR_IMG = #{ctgrImg},
+			REF_TYP_CD = #{refTypCd},
+			SPO_YN = #{spoYn}
+		WHERE
+			CTGR_IDX = #{ctgrIdx}
+	</update>
+
+<!-- 	카테고리 삭제 -->
+	<update id="delete" parameterType="string">
+		UPDATE
+			TBL_CTGR
+		SET
+			DEL_YN = 'Y'
+		WHERE
+			CTGR_IDX = #{value}
+	</update>
+
+<!-- 	카테고리 순위 재배치	 -->
+	<update id="updateRank" parameterType="string">
+		UPDATE
+			TBL_CTGR TB1
+		JOIN (
+			SELECT
+				CTGR_IDX,
+				@curRank := @curRank +1 rank
+			FROM
+				TBL_CTGR
+			JOIN
+				(SELECT @curRank := 0) r
+			WHERE
+				DEL_YN != 'Y'
+			AND CTGR_TYP_CD = ${value}
+			ORDER BY
+				CTGR_ORD
+		) TB2
+			ON TB1.CTGR_IDX = TB2.CTGR_IDX
+		SET
+			TB1.CTGR_ORD = TB2.rank
+	</update>
+
+<!-- 	카테고리 순서변경 -->
+	<update id="updateOrder" parameterType="categoryDTO">
+		UPDATE
+			TBL_CTGR
+		SET
+			CTGR_ORD = #{ctgrOrd}
+		WHERE
+			CTGR_IDX = #{ctgrIdx}
+	</update>
+</mapper>
