@@ -166,7 +166,7 @@
 		<dependency>
 		    <groupId>mysql</groupId>
 		    <artifactId>mysql-connector-java</artifactId>
-		    <version>5.1.42</version>
+		    <version>5.1.39</version>
 		</dependency>
 
 		<!-- AspectJ -->
@@ -180,7 +180,6 @@
 			<groupId>org.aspectj</groupId>
 			<artifactId>aspectjrt</artifactId>
 			<version>${org.aspectj-version}</version>
-			<scope>runtime</scope>
 		</dependency>
 
 		<!-- Logging -->
@@ -223,11 +222,11 @@
 			</exclusions>
 		</dependency>
 
-<!-- 		<dependency>
+		<dependency>
 		  <groupId>core.log</groupId>
 		  <artifactId>log4sql</artifactId>
 		  <version>0.1</version>
-		</dependency> -->
+		</dependency>
 
 		<!-- @Inject -->
 		<dependency>

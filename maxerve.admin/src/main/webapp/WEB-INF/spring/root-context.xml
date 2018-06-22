@@ -272,8 +272,8 @@
 		<security:intercept-url pattern="/information/recruit/delete*" access="hasRole('023007003Y')"/>
 
 		<!-- 미래청 -->
-		<security:intercept-url pattern="/information/recruit/update*" access="hasRole('023008001Y')"/>
-		<security:intercept-url pattern="/information/recruit/delete*" access="hasRole('023008001Y')"/>
+		<!-- <security:intercept-url pattern="/information/recruit/update*" access="hasRole('023008001Y')"/>
+		<security:intercept-url pattern="/information/recruit/delete*" access="hasRole('023008001Y')"/> -->
 		<security:intercept-url pattern="/facilities/future/**" access="hasRole('023008001')"/>
 
 		<security:intercept-url pattern="/**" access="hasRole('ROLE_USER')"/>

@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd" >
 <properties>
-	<!-- <entry key="jdbc.database.driver">core.log.jdbc.driver.MysqlDriver</entry> -->
-	<entry key="jdbc.database.driver">com.mysql.jdbc.Driver</entry>
-	<entry key="jdbc.database.url">jdbc:mysql://ideabeans.myds.me:3306/innopark</entry>
+	<entry key="jdbc.database.driver">core.log.jdbc.driver.MysqlDriver</entry>
+	<!-- <entry key="jdbc.database.driver">com.mysql.jdbc.Driver</entry> -->
+	<!-- <entry key="jdbc.database.url">jdbc:mysql://ideabeans.myds.me:3306/innopark</entry> -->
+	<entry key="jdbc.database.url">jdbc:mysql://127.0.0.1:3305/innopark</entry>
 	<entry key="jdbc.database.username">innopark</entry>
 	<entry key="jdbc.database.password">innopark</entry>
 	<entry key="jdbc.database.initialSize">5</entry>
