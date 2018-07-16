@@ -1,5 +1,22 @@
 package kr.maxerve.dto;
 
+/**
+* SmsDTO
+* @author LEEC.J
+* @since 2018.06.12
+* @version 1.0
+* @see
+*
+* <pre>
+* SMS
+* em_tran
+* << 개정이력(Modification Information) >>
+*
+* 수정일        수정자        수정내용
+* ----------      --------       ----------------------------------
+* 2018.06.12     LEEC.J        최초 생성
+* </pre>
+*/
 public class SmsDTO {
 	private String tran_pr = "";		// INT(11) NOT NULL AUTO_INCREMENT,
 	private String tran_refkey = "";	// VARCHAR(40) NULL DEFAULT NULL,

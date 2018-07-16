@@ -1,5 +1,22 @@
 package kr.maxerve.dto;
 
+/**
+* SponsorDTO
+* @author LEEC.J
+* 2018.06.22
+* @version 1.0
+* @see
+*
+* <pre>
+* 후원
+* TBL_SPO
+* << 개정이력(Modification Information) >>
+*
+* 수정일        수정자        수정내용
+* ----------      --------       ----------------------------------
+* 2018.06.22     LEEC.J        최초 생성
+* </pre>
+*/
 public class SponsorDTO {
 	private String spoIdx = "";			// int(11) NOT NULL AUTOINCREMENT COMMENT '후원 인덱스'
 	private String mbrIdx = "";			// int(11) NOT NULL COMMENT '혁신멤버 인덱스'

@@ -1,5 +1,22 @@
 package kr.maxerve.dto;
 
+/**
+* SurveyDTO
+* @author LEEC.J
+* @since 2018.06.01
+* @version 1.0
+* @see
+*
+* <pre>
+* 설문
+* TBL_SVY
+* << 개정이력(Modification Information) >>
+*
+* 수정일        수정자        수정내용
+* ----------      --------       ----------------------------------
+* 2018.06.01     LEEC.J        최초 생성
+* </pre>
+*/
 public class SurveyDTO {
 	private String svyIdx   = "";		// 	INT(11) NOT NULL AUTO_INCREMENT COMMENT '설문인덱스',
 	private String locTypCd = "";		// 	VARCHAR(50) NOT NULL COMMENT '소재지 공통코드(016)',

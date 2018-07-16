@@ -21,4 +21,7 @@
 	<entry key="mail.sender.host">ideabeans.myds.me</entry>
 <!-- 	메일발송자 -->
 	<entry key="mail.sender">darkflash@empal.com</entry>
+<!-- sla Template -->
+	<entry key="form_template">F:/SLA견적서/JXL/form_template.xls</entry>
+	<entry key="from_template_sheet">견적서</entry>
  </properties>

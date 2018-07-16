@@ -1,5 +1,22 @@
 package kr.maxerve.dto;
 
+/**
+* NewsLetterSubscribeDTO
+* @author LEEC.J
+* 2018.06.22
+* @version 1.0
+* @see
+*
+* <pre>
+* 뉴스레터 구독신청
+* TBL_NEWS_LTTR_SCB
+* << 개정이력(Modification Information) >>
+*
+* 수정일        수정자        수정내용
+* ----------      --------       ----------------------------------
+* 2018.06.22     LEEC.J        최초 생성
+* </pre>
+*/
 public class NewsLetterSubscribeDTO {
 	private String emil = "";			// varchar(200) NOT NULL COMMENT '이메일'
 	private String scbNm = "";			// Varchar(50) NOT NULL COMMENT '구독자명'

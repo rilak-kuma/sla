@@ -1,5 +1,22 @@
 package kr.maxerve.dto;
- 
+
+/**
+* QuestionDTO
+* @author LEEC.J
+* 2018.06.22
+* @version 1.0
+* @see
+*
+* <pre>
+* 문의
+* TBL_QSTN
+* << 개정이력(Modification Information) >>
+*
+* 수정일        수정자        수정내용
+* ----------      --------       ----------------------------------
+* 2018.06.22     LEEC.J        최초 생성
+* </pre>
+*/
 public class QuestionDTO {
 	private String qstnIdx = "";			// int(11) NOT NULL AUTOINCREMENT COMMENT '문의 인덱스'
 	private String qstnTypCd = "";		// varchar(50) NOT NULL COMMENT '문의유형 공통코드'

@@ -1,5 +1,22 @@
 package kr.maxerve.dto;
 
+/**
+* RentTheAreaDTO
+* @author LEEC.J
+* @since 2018.06.07
+* @version 1.0
+* @see
+*
+* <pre>
+* 대관
+* TBL_RTA
+* << 개정이력(Modification Information) >>
+*
+* 수정일        수정자        수정내용
+* ----------      --------       ----------------------------------
+* 2018.06.07     LEEC.J        최초 생성
+* </pre>
+*/
 public class RentTheAreaDTO {
 	private String rtaIdx = "";	// INT(11) NOT NULL AUTO_INCREMENT COMMENT '대관 인덱스'
 	private String titl = "";	// VARCHAR(50) NOT NULL COMMENT '제목',
@@ -9,7 +26,14 @@ public class RentTheAreaDTO {
 	private String delYn = "";		// VARCHAR(1) NOT NULL DEFAULT 'N' COMMENT '삭제여부'
 	private String creDttm = "";	 	// DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성일시'
 	private String modDttm = "";	 	// DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일시'
-
+	private String mbrId = "";
+	
+	public String getMbrId() {
+		return mbrId;
+	}
+	public void setMbrId(String mbrId) {
+		this.mbrId = mbrId;
+	}
 	public String getRtaSrtDttm() {
 		return rtaSrtDttm;
 	}

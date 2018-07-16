@@ -1,5 +1,22 @@
 package kr.maxerve.dto;
 
+/**
+* TagDTO
+* @author LEEC.J
+* 2018.06.22
+* @version 1.0
+* @see
+*
+* <pre>
+* 태그
+* TBL_TAG
+* << 개정이력(Modification Information) >>
+*
+* 수정일        수정자        수정내용
+* ----------      --------       ----------------------------------
+* 2018.06.22     LEEC.J        최초 생성
+* </pre>
+*/
 public class TagDTO {
 	private String tagNm;			// varchar(50) NOT NULL COMMENT '태그명'
 	private String tagCnt;			// int(11) NOT NULL COMMENT '태그 카운트'

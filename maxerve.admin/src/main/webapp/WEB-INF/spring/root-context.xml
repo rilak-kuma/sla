@@ -28,7 +28,7 @@
 	    </property>
 	</bean>
 
-    <!-- bean id="messageSource" class="kr.maxerve.admin.framework.CustomReloadableResourceBundleMessageSource">
+    <bean id="messageSource" class="kr.maxerve.admin.framework.CustomReloadableResourceBundleMessageSource">
 		<property name="defaultEncoding" value="UTF-8"/>
 		<property name="basenames">
 			<list>
@@ -38,7 +38,7 @@
 		<property name="cacheSeconds">
 			<value>60</value>
 		</property>
-	</bean-->
+	</bean>
 
 <!-- 	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close"> -->
 <!--         <property name="driverClassName" value="oracle.jdbc.driver.OracleDriver"/> -->
@@ -80,7 +80,7 @@
 		<aop:advisor advice-ref="txAdvice" pointcut-ref="requiredTx" />
 	</aop:config>
 
-    <!-- bean id="propertiesService" class="kr.maxerve.admin.framework.CustomPropertiesFactoryBean">
+    <bean id="propertiesService" class="kr.maxerve.admin.framework.CustomPropertiesFactoryBean">
 	    <property name="fileEncoding" value="UTF-8"/>
         <property name="locations">
             <list>
@@ -88,7 +88,7 @@
                 <value>classpath:/properties/properties.xml</value>
             </list>
         </property>
-    </bean-->
+    </bean>
 
 <!--     <bean id="propertiesService" class="org.springframework.beans.factory.config.PropertiesFactoryBean"> -->
 <!-- 	    <property name="fileEncoding" value="UTF-8"/> -->
@@ -114,14 +114,14 @@
 		<constructor-arg ref="sqlSessionFactory" />
 	</bean>
 
-	<!-- bean id="serviceAop" class="kr.maxerve.admin.framework.ServiceAOP"/>
+	<bean id="serviceAop" class="kr.maxerve.admin.framework.ServiceAOP"/>
     <aop:config>
         <aop:pointcut id="servicePointcut" expression="execution(* kr.maxerve.admin..impl.*Impl.*(..))" />
 
 	    <aop:aspect ref="serviceAop">
 	        <aop:around method="serviceAOP" pointcut-ref="servicePointcut"/>
 	    </aop:aspect>
-	</aop:config-->
+	</aop:config>
 
 <!-- 	mail sender -->
 	<bean id="javaMailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
@@ -292,10 +292,10 @@
 	<security:authentication-manager>
 		<security:authentication-provider ref="customAuthenticationProvider" />
 	</security:authentication-manager>
-<!-- 
+
 	<bean id="customAuthenticationProvider" class="kr.maxerve.admin.framework.CustomAuthenticationProvider" />
 	<bean id="ajaxSessionTimeoutFilter" class="kr.maxerve.admin.framework.AjaxSessionTimeoutFilter">
 		<property name="ajaxHeader" value="SKIPAUTH"/>
 	</bean>
--->
+
 </beans>

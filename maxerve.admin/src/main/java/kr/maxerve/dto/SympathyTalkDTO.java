@@ -1,5 +1,22 @@
 package kr.maxerve.dto;
 
+/**
+* SympathyTalkDTO
+* @author LEEC.J
+* 2018.06.22
+* @version 1.0
+* @see
+*
+* <pre>
+* 공감토크
+* TBL_FSW_TALK
+* << 개정이력(Modification Information) >>
+*
+* 수정일        수정자        수정내용
+* ----------      --------       ----------------------------------
+* 2018.06.22     LEEC.J        최초 생성
+* </pre>
+*/
 public class SympathyTalkDTO {
 	private String fswTalkIdx = "";		// int(11) NOT NULL AUTOINCREMENT COMMENT '공감토크 인덱스'
 	private String mngrMbrIdx = "";		// INT(11) NOT NULL COMMENT '관리자 인덱스',

@@ -1,5 +1,22 @@
 package kr.maxerve.dto;
 
+/**
+* SimpleApplyDTO
+* @author LEEC.J
+* @since 2018.06.04
+* @version 1.0
+* @see
+*
+* <pre>
+* 단순신청
+* TBL_SIPL_APLY
+* << 개정이력(Modification Information) >>
+*
+* 수정일        수정자        수정내용
+* ----------      --------       ----------------------------------
+* 2018.06.04     LEEC.J        최초 생성
+* </pre>
+*/
 public class SimpleApplyDTO {
 	private String siplAplyIdx = "";			// INT(11) NOT NULL AUTO_INCREMENT COMMENT '신청 인덱스',
 	private String mbrIdx = "";				// INT(11) NOT NULL COMMENT '회원인덱스',

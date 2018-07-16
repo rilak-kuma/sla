@@ -1,19 +1,20 @@
 package kr.maxerve.dto;
 
 /**
-* FacilitiesMasterDTO.java
+* FacilitiesMasterDTO
 * @author LEEC.J
-* @since 2018.06.15
+* 2018.06.22
 * @version 1.0
 * @see
 *
 * <pre>
-* 파일
+* 시설마스터
+* TBL_FCT_MST
 * << 개정이력(Modification Information) >>
 *
 * 수정일        수정자        수정내용
 * ----------      --------       ----------------------------------
-* 2018.06.15      LEEC.J         최초 생성
+* 2018.06.22     LEEC.J        최초 생성
 * </pre>
 */
 public class FacilitiesMasterDTO {
@@ -42,9 +43,23 @@ public class FacilitiesMasterDTO {
 	private String delYn = "";				// VARCHAR(1) NOT NULL DEFAULT 'N' COMMENT '삭제여부'
 	private String creDttm = "";				// DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성일시'
 	private String modDttm = "";				// DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '수정일시'
-
+	private String fctInfo = "";
+	private String caution = "";
+	
 	public String getFctMstIdx() {
 		return fctMstIdx;
+	}
+	public String getFctInfo() {
+		return fctInfo;
+	}
+	public void setFctInfo(String fctInfo) {
+		this.fctInfo = fctInfo;
+	}
+	public String getCaution() {
+		return caution;
+	}
+	public void setCaution(String caution) {
+		this.caution = caution;
 	}
 	public void setFctMstIdx(String fctMstIdx) {
 		this.fctMstIdx = fctMstIdx;

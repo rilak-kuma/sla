@@ -1,5 +1,22 @@
 package kr.maxerve.dto;
 
+/**
+* SimpleResourceDTO
+* @author LEEC.J
+* @since 2018.06.12
+* @version 1.0
+* @see
+*
+* <pre>
+* 단순리소스
+* TBL_SIPL_RSC
+* << 개정이력(Modification Information) >>
+*
+* 수정일        수정자        수정내용
+* ----------      --------       ----------------------------------
+* 2018.06.12     LEEC.J        최초 생성
+* </pre>
+*/
 public class SimpleResourceDTO {
 	private String siplRscIdx;		// VARCHAR(50) NOT NULL COMMENT '단순리소스 인덱스'
 	private String siplRscTypCd;	// VARCHAR(50) NOT NULL COMMENT '단순리소스 종류 공통코드(024)'
